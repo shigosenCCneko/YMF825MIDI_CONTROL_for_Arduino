@@ -25,7 +25,7 @@ send_buf_byte:  .dc.b 0
 
 usart_write_p: .dc.b 0
 usart_read_p:  .dc.b 0
-;usart_cnt:     .dc.b 0   
+usart_cnt:     .dc.b 0   
 
 .section .bss
 .balign 256
@@ -176,6 +176,7 @@ brne loop1
 .endfunc
 
 
+
 .func usart_read
 usart_read:
 cli
@@ -234,7 +235,7 @@ USART_RX_vect:
   reti
 .endfunc
 
-
-
+/*
+*/
 
 

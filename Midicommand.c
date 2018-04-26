@@ -639,8 +639,31 @@ void SetupHardware(void)
 
 
   /* Hardware Initialization */
-  CLKPR = 0x80;
-  CLKPR = 0x00;
+//  CLKPR = 0x80;
+//  CLKPR = 0x00;
+
+DDRD |= 0x0c;
+  
+  
+  /* usart setup */
+  /**/
+  UBRR0 = 0;
+  UCSR0A |= (1 << U2X0);
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) ;
+
+  UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
+  UBRR0 = 0x0007;
+
+
+  SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);
+  //SPSR = 0;  //4Mh
+  SPSR = (1 << SPI2X); //8MH
+  PINB = 0xFF;
+  PORTB = 0x0C;
+
+  DDRB = 0x2C;
+  SPCR |= (1 << SPIE);
+
 
 
   _delay_ms(50);

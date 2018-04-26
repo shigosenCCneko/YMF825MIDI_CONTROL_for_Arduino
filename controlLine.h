@@ -6,11 +6,19 @@
  */ 
 
 
+
+
+
+/*
+#define wr_hi() (PORTB |= 0x04)
+#define wr_lo() (PORTB &= ~(0x04))
+#define wrl_hi() (PORTB |= 0x04)
+#define wrl_lo() (PORTB &= ~(0x04))
+*/
 #define wr_lo()  asm("cbi 5,2 ")
 #define wr_hi()  asm("sbi 5,2 ")
 #define wrl_lo() asm("cbi 5,2 ")
 #define wrl_hi()  asm("sbi5,2 ")
-
 //#define ymf825wr_hi sbi _SFR_IO_ADDR(PORTD),2
 //#define ymf825wr_lo cbi _SFR_IO_ADDR(PORTD),2	
 

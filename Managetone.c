@@ -42,9 +42,9 @@ extern uint8_t play_mode;
 //extern char  modulation_tblpointer[16]; //sin
 
 extern const char divtbl[32][32];
-//char  sin_pointer[16];
-//char  sin_pitch[16];
-//char  sin_tbl_offs[16];
+char  sin_pointer[16];
+char  sin_pitch[16];
+char  sin_tbl_offs[16];
 uint8_t voice_queue[MAX_VOICE_NUM];
 uint8_t voice_queue_top;
 uint8_t voice_queue_tail;

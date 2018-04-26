@@ -47,42 +47,35 @@ void setup() {
 void loop() {
 
   while (1) {
-  
+
     dat1 = usart_read();
 
     if (dat1 == 0xf0) {
       sysExcnt = 1;
-      
+
       do {
         data = usart_read();
         sysex_buf[sysExcnt++] = data;
       } while (data != 0xf7);  //システムエクルシーブメッセージ終了
       midi_sysEx(sysex_buf, sysExcnt);
       sysExcnt = 0;
-      
+
     } else {
-      
+
       if (dat1 & 0x80) {
         com = dat1 & 0xf0;
         dat2 = usart_read();
-        
+
         if ( (com == 0xc0) || (com == 0xd0)) {
           midi_command(com, dat1, dat2, dat3);
 
         } else {
-          
+
           dat3 = usart_read();
           midi_command(com, dat1, dat2, dat3);
         }
       }
     }
   }
-
-
-
-
-
-
-  
 }
 

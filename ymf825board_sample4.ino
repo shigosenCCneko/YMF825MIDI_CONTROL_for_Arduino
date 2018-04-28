@@ -37,7 +37,8 @@ void setup() {
 
   _delay_ms(400);
   //Serial.begin(250000);
-  (_SFR_BYTE(TIMSK0) &= ~(_BV(TOIE0)));   //タイマ割り込みの停止
+  TIMSK0 = 0;   //タイマ割り込みの停止
+
 
   //  sei();
 
@@ -45,7 +46,6 @@ void setup() {
 
 
 void loop() {
-
   while (1) {
 
     dat1 = usart_read();

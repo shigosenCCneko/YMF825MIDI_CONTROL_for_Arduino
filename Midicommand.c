@@ -815,7 +815,7 @@ void reset_ymf825() {
   if_s_write( 0x02, 0x00 );
   //add
   //if_s_write( 0x19, 0xcc );//MASTER VOL
-  if_s_write( 0x19, 0xac );//MASTER VOL
+  if_s_write( 0x19, 0x9c );//MASTER VOL
   if_s_write( 0x1B, 0x3F );//interpolation
   if_s_write(0x1b, 0x00);
 

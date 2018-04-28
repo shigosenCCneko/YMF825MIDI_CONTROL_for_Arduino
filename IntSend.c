@@ -47,8 +47,10 @@ void send_atmega(char c) {
   c =  SPDR;
 
 }
+
+/* アセンブラ内から呼ばれるサブルーチン */
 asm(
-  "write_wait_data:     \n\t"   //15
+  "write_wait_data:     \n\t"   //15   SPI書き込みのタイミングはloopさせると上手く合わないので無効命令で17Clockに合わせた
   "   ld  r24,Z+        \n\t"   //17
   "   out 0x2E,r24      \n\t"
   "   lpm r24,Z         \n\t"   //3
@@ -74,7 +76,7 @@ void write_burst() {
 
   asm(
 
-    ".macro Write60 from=0,to=59 \n\t"
+    ".macro Write60 from=0,to=59 \n\t"      //call write_wait_dataを60個並べるマクロ
     "call write_wait_data     \n\t"
 
     "   .if \\to-\\from              \n\t"
@@ -96,8 +98,10 @@ void write_burst() {
     "cbi 5,2         \n\t"
 
     ";cli             \n\t"
-    "ldi r24,0x50   \n\t"    //SPI割り込み停止
+ 
+    "ldi r24,0x50   \n\t"    //SPI割り込みのみ停止、Serialの受信割り込みは続ける
     "out 0x2c,r24   \n\t"
+
 
 
     "in r24,0x2e      \n\t"

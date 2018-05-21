@@ -199,7 +199,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
 
     case MIDI_PITCH_BEND:
-
+        PORTD ^= 0x08;
       ch = midi_data1 & 0x0f;
 
 
@@ -220,7 +220,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
     case 	MIDI_CONTROL_CHANGE:
 
-
+        PORTD ^= 0x08;
       ch = midi_data1 & 0x0f;
       switch (midi_data2) {
 
@@ -830,7 +830,7 @@ void reset_ymf825() {
   if_s_write( 0x08, 0x00 );
 
   //if_s_write( 0x09, 0xF8 );
-  if_s_write( 0x09, 0xd0 );
+  if_s_write( 0x09, 0xb8 );
   if_s_write( 0x0b, 0x00 );
 
   if_s_write( 0x17, 0x40 );//MS_S

@@ -277,7 +277,12 @@ void hold_off(uint8_t ch) {
 
 }
 
-
+void all_note_off(){
+  int i;
+  for(i = 0;i<16;i++){
+    mute(i);
+  }
+}
 
 void mute(uint8_t ch) {
   if_s_write(0x0b, ch);

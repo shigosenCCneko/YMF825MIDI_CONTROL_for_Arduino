@@ -321,6 +321,9 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
           break;
 
         case 121:	//
+          all_note_off();
+          init_midich();
+           setChannelDefault();
 
           break;
           // setChannelDefault();
@@ -475,7 +478,7 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
 
 
   // int f;
-  // int ch;
+   int ch;
   int adr;
 
 
@@ -540,6 +543,39 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
           mem_reset();
         }
         break;
+
+      case 5: // set tone data  EEPROM  ;
+           ch = (int)Data[1];
+            f = (int)Data[2];
+            c = Data[3];
+              ch = ch << 5;
+              f = f + ch;
+      
+              eeprom_busy_wait();
+              eeprom_write_byte((uint8_t *)f,c);
+              break;
+      case 6: // read tone data from EEPROM
+        eeprom_p_midi = (char *)(Data[1] << 5);
+        for(f = 0;f < 30;f++){
+          c = eeprom_read_byte((uint8_t *)(eeprom_p_midi++));
+          while(!(UCSR0A & (1 <<UDRE0)))
+            ;
+           UDR0 = c;
+         _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる          
+        }
+
+        
+
+        break;
+
+
+
+
+
+
+
+
+
 
 
 
@@ -652,8 +688,9 @@ DDRD |= 0x0c;
   UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) ;
 
   UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
-  UBRR0 = 0x0007;
-
+  //UBRR0 = 0x0007;   //250,000
+ // UBRR0 = 0x0010;   //115,200
+  UBRR0 = 0x0000;   //2,000,000
 
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);
   //SPSR = 0;  //4Mh

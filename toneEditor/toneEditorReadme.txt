@@ -9,15 +9,14 @@
 
 使用方？
 
-ymf825.propertiesファイルで入出力のMIDIデバイス名,COMポートの通信速度
+仮想MIDIケーブルを使いブリッジするデバイスを作り
+ymf825.propertiesファイルでブリッジする入力のMIDIデバイス名,COMポートの通信速度
 ブリッジするMIDIポートを指定します。
 プロパティファイルは実行パスに置いてください。
 
 
-(MIDI出力)
-	midiInDeviceName=MIDIIN2 (LUFA Dual MIDI Demo)
-	midiOutDeviceName=MIDIOUT2 (LUFA Dual MIDI Demo)
-
+(MIDIブリッジin)
+	midiStreamDeviceName=Trans
 COMポート指定
 	midiComPort=COM9
 ボーレート指定
@@ -86,5 +85,5 @@ waveイメージなんかフリーハンドで書いたもんですから
 
 2018/2/4 MIDIデバイスをプロパティファイルで指定するよう変更。
 2018/5/21 COMポートをプロパティファイル指定。
-
+2018/5/26　使用しないMIDI入出力デバイスを指定しないと起動しないのを修正
 

@@ -59,9 +59,9 @@ void keyoff(void);
 int		active_voice_num;
 char channel_noteno[16];
 
-uint8_t career_no[8][4] = { {1, 0, 0, 0},
+uint8_t career_no[8][4] = {
+  {1, 0, 0, 0},
   {0, 1, 0, 0},
-
   {0, 1, 2, 3},
   {3, 0, 0, 0},
   {3, 0, 0, 0},
@@ -130,7 +130,7 @@ void init_midich(void) {
     midi_ch[i].panpot_R = 25;
     midi_ch[i].pitch_sens = 2;
     midi_ch[i].voice_list = NULL;	//
-    /*-------------------------------note oｽ */
+    /*-------------------------------note  */
     midi_ch[i].reg_16 = 0x60;	//ch_vol,expression
     //midi_ch[i].reg_16R = 60;
     //midi_ch[i].reg_16L = 60;
@@ -157,23 +157,15 @@ int get_voice(uint8_t ch, uint8_t tone_no, uint8_t velo) {
 
       voice_ch =  p->voice_ch;
       mute(voice_ch);
-      //break;
-      return voice_ch;
-      //}
-    }
 
+    }
     p = p->next;
   }
-  //if(voice_ch != NOT_GET){
-  //return voice_ch;
-  //}
-
 
   if (active_voice_num == MAX_VOICE_NUM) {
     voice_ch = voice_queue_top;
     note_off(voice_ch);
     return voice_ch;
-    //return NOT_GET;
   }
   voice_ch = voice_queue[voice_queue_top++];
   if (voice_queue_top == MAX_VOICE_NUM) {
@@ -201,19 +193,13 @@ int get_voice(uint8_t ch, uint8_t tone_no, uint8_t velo) {
 int  return_voice(uint8_t ch, uint8_t tone_no) {
   struct VoiceChannel **p;
   int voice_ch;
-  //int i;
-
 
   p = &(midi_ch[ch].voice_list);
-  //voice_ch = NOT_GET;
-
   while ( *p != NULL) {
 
     if ( (*p)->note_no == tone_no) {
       if ( midi_ch[ch].hold == TRUE) {
         (*p)->hold = TRUE;		//hol
-       
-    //break;
         return NOT_GET;
       }
       voice_ch = (*p)->voice_ch;
@@ -224,12 +210,10 @@ int  return_voice(uint8_t ch, uint8_t tone_no) {
         voice_queue_tail = 0;
       }
       active_voice_num--;
-      //break;
       return voice_ch;
     }
     p = &( (*p)->next);
   }
-  //return voice_ch;
   return NOT_GET;
 }
 
@@ -268,8 +252,6 @@ void hold_off(uint8_t ch) {
         voice_queue_tail = 0;
       }
       active_voice_num--;
-
-
     } else {
       p = &( (*p)->next);
     }
@@ -291,8 +273,6 @@ void mute(uint8_t ch) {
 }
 
 
-
-
 void note_on(uint8_t midich, uint8_t voicech, uint8_t note_no, uint8_t velo, uint8_t voice_no) {
 
 
@@ -303,22 +283,11 @@ void note_on(uint8_t midich, uint8_t voicech, uint8_t note_no, uint8_t velo, uin
   //modulation_cnt[voicech] = modulation_pitch[voicech];
   //sin_pointer[voicech] = 0;
 
-
   velo = velo & 0x7C;  //  (velo >>2 ) << 2);
- // velo = velo >> 2;
-
-  
- 
   ym825_voice_ch[voicech].release_cnt = rel_optval[voice_no];
 
-
-
-
-if_s_write(0x0b, voicech);
- 
-
-
-if_s_write(0x0C,velo);  // #12
+  if_s_write(0x0b, voicech);
+  if_s_write(0x0C,velo);  // #12
 
 /*
   if_s_rwrite( 0x0c, (pgm_read_byte( &(divtbl[velo][ midi_ch[midich].panpot_R ]))) << 2);
@@ -328,20 +297,15 @@ if_s_write(0x0C,velo);  // #12
 if_s_write(0x0D, fnum_hi_tbl[note_no]);
 if_s_write(0x0E, fnum_lo_tbl[note_no]);
 */
- 
-
   if_s_write(0x0D, pgm_read_byte( &(fnum_hi_tbl[note_no])));
   if_s_write(0x0E, pgm_read_byte( &(fnum_lo_tbl[note_no])));
-
 
   if_s_write(0x10, midi_ch[midich].reg_16);
   if_s_write(0x11, midi_ch[midich].reg_17);
   if_s_write(0x12, midi_ch[midich].reg_18);
   if_s_write(0x13, midi_ch[midich].reg_19);
 
-
   if_s_write(0x0f, 0x40 | voice_no);
-
  
 }
 
@@ -363,7 +327,6 @@ void optimize_queue() {
         p = MAX_VOICE_NUM;
       }
       p--;
-
       k = ym825_voice_ch[voice_queue[p]].release_cnt;
       if (k != 0)
         k--;
@@ -379,23 +342,16 @@ void optimize_queue() {
         //k = voice_queue[p];
         //voice_queue[p] = voice_queue[pre];
         //voice_queue[p] = k;
-
       }
-
     }
   }
-
 }
 void note_off(uint8_t voice_ch) {
   //setChannel(ch);
   if_s_write(0x0b, voice_ch);
   if_s_write(0x0F, ym825_voice_ch[voice_ch].voice_no);
 
-
-
-
 }
-
 
 
 void note_off_func(int ch, char i) {
@@ -425,8 +381,6 @@ void note_off_func(int ch, char i) {
   }
 
 }
-
-
 
 void change_modulation(uint8_t ch, uint8_t mod) {
   struct VoiceChannel *p;
@@ -470,7 +424,6 @@ void change_part_level(uint8_t ch, uint8_t val) {
 
   midi_ch[ch].reg_16 = val;
 
-
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
     if_s_write(0x0b, p->voice_ch);
@@ -481,7 +434,6 @@ void change_part_level(uint8_t ch, uint8_t val) {
 
 void change_expression(uint8_t ch, uint8_t val) {
   struct VoiceChannel *p;
-
 
   midi_ch[ch].reg_16 = val;
 
@@ -496,28 +448,19 @@ void change_expression(uint8_t ch, uint8_t val) {
 
 
 
-
 void pitch_wheel_change(char ch, char i , char j) {
   int f, d;
 
-
   f = (i << 7) | j;
-
   f = calc_exp(f, midi_ch[ch].pitch_sens);
 
-
-
   d = (f >> 11) & 0x001f;
-
-
-
 
   if_s_write(0x0B, ch);
   if_s_write(0x12, d);
 
   d = (f >> 4) & 0x007f;
   if_s_write(0x13, d);
-
 
 }
 

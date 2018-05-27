@@ -23,6 +23,7 @@ uint16_t calc_exp(uint16_t,uint8_t);
 void note_on(uint8_t,uint8_t,uint8_t,uint8_t,uint8_t);
 void note_off(uint8_t);
 void mute(uint8_t);
+void all_note_off(void);
 
 struct VoiceChannel{
 	uint8_t voice_ch;

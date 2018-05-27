@@ -51,20 +51,9 @@ uint8_t pan_level[32] = {27, 27, 28, 28, 29, 29, 30, 30, 30, 31, 31, 30, 29, 29,
                          26, 25, 24, 23, 21, 18, 17, 14, 12, 11, 9, 7, 6, 4, 2, 0
                         };
 
-
-
-//uint8_t pan_level[32] = {28,28,29,29,30,30,31,31,31,30,30,29,28,28,28,27,
-//26,25,24,23,21,18,17,14,12,11,9,7,6,4,2,0};
-
-
-
-
-//char MAX_3MUL = 8;
 int eeprom_no = 0;				//Selected channel
-int eeprom_p_midi = 0;			//eeprom read pointer;
+char *eeprom_p_midi = 0;			//eeprom read pointer;
 char channelVal;				// Channel value
-
-
 
 //char  modulation_depth[16];	//modulation
 //char  modulation_pitch[16];	//modulation
@@ -78,17 +67,12 @@ uint8_t rpn_lsb[16];
 //char  sin_pitch[16];
 //char  sin_tbl_offs[16];
 
-
 uint8_t play_mode = 1;			// state of channel 1 [mono,mul,hum]
 uint8_t hid_res_mode = 0;
 uint16_t flash_squ = 0;
 
-
-
 char bank = 0;
-
-
-char send_cnt = 0;
+//char send_cnt = 0;
 
 void optimize_queue(void);
 void mem_reset(void);
@@ -96,17 +80,11 @@ void setChannelDefault();
 
 
 void if_s_write(uint8_t addr, uint8_t data);
-
-
 void note_on(uint8_t, uint8_t , uint8_t , uint8_t , uint8_t);
-
 void pitch_wheel_change(char , char  , char );
 void startup_sound(void);
 
-
-
 extern uint16_t calc_exp(uint16_t, uint8_t);
-
 
 void note_off_func(int, char);
 void set_timer_intrupt(void);
@@ -156,22 +134,16 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
     case MIDI_NOTE_ON:
 
-      PORTD ^= 0x04;
       ch = midi_data1 & 0x0f;
-      //  midi_data2 = midi_data2;
-      //  midi_data3 = midi_data3;
       if (midi_data3 == 0) {
         note_off_func(ch, midi_data2);
 
-        //break;
       } else {
-
 
         if (play_mode == 1) {
 
           f = get_voice(ch, midi_data2, midi_data3);
           note_on(ch, f, midi_data2, midi_data3, midi_ch[ch].voice_no);
-
 
         } else if (play_mode == 3) {
 
@@ -199,10 +171,8 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
 
     case MIDI_PITCH_BEND:
-        PORTD ^= 0x08;
+
       ch = midi_data1 & 0x0f;
-
-
       if (play_mode == 1) {
         change_pitchbend(ch, midi_data3, midi_data2);
 
@@ -220,7 +190,6 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
     case 	MIDI_CONTROL_CHANGE:
 
-        PORTD ^= 0x08;
       ch = midi_data1 & 0x0f;
       switch (midi_data2) {
 
@@ -240,7 +209,6 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
               change_expression(ch, k);
               change_expression(ch + 8, k);
             }
-
 
           } else {
             if_s_write(0x0B, ch);
@@ -323,7 +291,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
         case 121:	//
           all_note_off();
           init_midich();
-           setChannelDefault();
+          setChannelDefault();
 
           break;
           // setChannelDefault();
@@ -405,7 +373,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
         						}
         						break;
 
-        					case 76: //if(i == 76){  // �ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽW�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ[�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽV�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｿ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｿ�ｽｽ�ｿｽ�ｽｽ�ｽｽ�ｿｽ�ｽｽ�ｽｽpitch
+        					case 76: //if(i == 76){  //
         						modulation_pitch[ch] = j ;
         						modulation_cnt[ch] = modulation_pitch[ch];
         						if( play_mode == 3  ){
@@ -471,23 +439,14 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
   uint8_t a, c;
   uint8_t j;
   int f;
-
-  // uint8_t i, j, l;
+  int i;
   uint8_t l;
-  //uint8_t k, m;
-
-
-  // int f;
-   int ch;
+  int ch;
   int adr;
 
 
-
-
-  //  if ((sysex_mes[0] == 0xf0) && (sysex_mes[1] == 0x00)) {
-  //   if (sysex_mes[1] != 0x43 ) {
   if (dat_len < 8) {
-   
+
     Data[0] = sysex_mes[1];
     Data[1] = sysex_mes[2];
     Data[2] = sysex_mes[3];
@@ -545,54 +504,42 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         break;
 
       case 5: // set tone data  EEPROM  ;
-           ch = (int)Data[1];
-            f = (int)Data[2];
-            c = Data[3];
-              ch = ch << 5;
-              f = f + ch;
-      
-              eeprom_busy_wait();
-              eeprom_write_byte((uint8_t *)f,c);
-              break;
+        ch = (int)Data[1];
+        f = (int)Data[2];
+        c = Data[3];
+        ch = ch << 5;
+        f = f + ch;
+
+        eeprom_busy_wait();
+        eeprom_write_byte((uint8_t *)f, c);
+        break;
       case 6: // read tone data from EEPROM
         eeprom_p_midi = (char *)(Data[1] << 5);
-        for(f = 0;f < 30;f++){
+        for (f = 0; f < 30; f++) {
           c = eeprom_read_byte((uint8_t *)(eeprom_p_midi++));
-          while(!(UCSR0A & (1 <<UDRE0)))
+          while (!(UCSR0A & (1 << UDRE0)))
             ;
-           UDR0 = c;
-         _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる          
+          UDR0 = c;
+          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
         }
-
-        
-
         break;
-
-
-
-
-
-
-
-
-
-
 
 
       case 9:
         write_burst();
-
         break;
+        
       case 10:
         tone_reg[Data[1] * 30 + Data[2] ] = Data[3];
         write_burst();
-        PORTD ^= 0x08;
-
         break;
+        
       case 11:
 
         tone_reg[Data[1] * 30 + Data[2]] = Data[3];
         break;
+
+ 
 
       default:
         break;
@@ -664,23 +611,17 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
 
 
 
-
-
-
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
   int i, ch;
 
-
-
   /* Hardware Initialization */
-//  CLKPR = 0x80;
-//  CLKPR = 0x00;
 
-DDRD |= 0x0c;
-  
-  
+
+  DDRD |= 0x0c;
+
+
   /* usart setup */
   /**/
   UBRR0 = 0;
@@ -689,7 +630,7 @@ DDRD |= 0x0c;
 
   UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
   //UBRR0 = 0x0007;   //250,000
- // UBRR0 = 0x0010;   //115,200
+  // UBRR0 = 0x0010;   //115,200
   UBRR0 = 0x0000;   //2,000,000
 
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);
@@ -700,8 +641,6 @@ DDRD |= 0x0c;
 
   DDRB = 0x2C;
   SPCR |= (1 << SPIE);
-
-
 
   _delay_ms(50);
   //usart_spi_init();
@@ -728,8 +667,6 @@ void keyoff(void) {
 }
 
 
-
-
 void setChannelDefault() {
   char reg;
   int i, j, val;
@@ -744,9 +681,7 @@ void setChannelDefault() {
 
     //modulation_depth[i] = 20;
     //modulation_pitch[i] = 21;	//modulation
-
     //modulation_cnt[i] = 0;    //modulation
-
 
     //modulation_tblpointer[i] = 0;
     //sin_pointer[i] = 0;
@@ -760,14 +695,9 @@ void setChannelDefault() {
 }
 
 
-
-
-
-
 void mem_reset(void) {
   init_midich();
 }
-
 
 void set_timer_intrupt(void) {
   OCR1A = 0x18;
@@ -932,9 +862,6 @@ void reset_ymf825() {
   }
 
   write_burst();
-
-
-
 
 }
 

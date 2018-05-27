@@ -18,13 +18,6 @@ uint8_t sysExcnt = 0;
 uint8_t dat1, dat2, dat3, com;
 uint8_t sysex_buf[65];
 
-uint8_t midi_cnt = 0;
-
-
-
-
-
-
 
 
 unsigned char fm_data1, fm_data2, fm_data3, fm_data4;
@@ -36,11 +29,8 @@ void setup() {
   optimize_queue();
 
   _delay_ms(400);
-  //Serial.begin(250000);
+
   TIMSK0 = 0;   //タイマ割り込みの停止
-
-
-  //  sei();
 
 }
 

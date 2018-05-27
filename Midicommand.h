@@ -22,5 +22,5 @@ void write_burst(void);
 void flush_spi_buff(void);
 void reset_ymf825(void);
 void startup_sound(void);
-
+void lwrite_burst(void);
 

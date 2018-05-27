@@ -50,20 +50,20 @@ void send_atmega(char c) {
 
 /* アセンブラ内から呼ばれるサブルーチン */
 asm(
-  "write_wait_data:     \n\t"   //15   SPI書き込みのタイミングはloopさせると上手く合わないので無効命令で17Clockに合わせた
-  "   ld  r24,Z+        \n\t"   //17
+  "   write_wait_data:     \n\t"   //15   SPI書き込みのタイミングはloopさせると上手く合わないので無効命令で17Clockに合わせた
+  "   ld  r24,Z+        \n\t"      //17
   "   out 0x2E,r24      \n\t"
-  "   lpm r24,Z         \n\t"   //3
-  "   lpm r24,Z         \n\t"   //6 
-  "   nop               \n\t"   //7
-  "   ret               \n\t"   //11
+  "   lpm r24,Z         \n\t"      //3
+  "   lpm r24,Z         \n\t"      //6
+  "   nop               \n\t"      //7
+  "   ret               \n\t"      //11
 
   "wait_16clock:        \n\t"
-  "lpm r24,Z            \n\t"
-  "lpm r24,Z            \n\t"
-  "nop                  \n\t"
-  "nop                  \n\t"
-  "ret                  \n\t"
+  "   lpm r24,Z            \n\t"
+  "   lpm r24,Z            \n\t"
+  "   nop                  \n\t"
+  "   nop                  \n\t"
+  "   ret                  \n\t"
 
 );
 
@@ -72,154 +72,78 @@ void write_burst() {
   char k, l, m, alg;
   int i;
 
-  PORTD ^= 0x04;
-
   asm(
 
-    ".macro Write60 from=0,to=59 \n\t"      //call write_wait_dataを60個並べるマクロ
-    "call write_wait_data     \n\t"
+    " ldi  r24,0x08           \n\t"
+    " ldi  r22,0x16           \n\t"
+    " call if_s_write         \n\t"
 
-    "   .if \\to-\\from              \n\t"
-    "       Write60 \"(\\from+1)\"   \n\t"
-    "   .endif                       \n\t"
-    ".endm                           \n\t"
+    " ldi  r24,0x08           \n\t"
+    " ldi  r22,0x00           \n\t"
+    " call if_s_write         \n\t"
 
-
-
-    "ldi  r24,0x08      \n\t"
-    "ldi  r22,0x16      \n\t"
-    "call if_s_write    \n\t"
-
-    "ldi  r24,0x08      \n\t"
-    "ldi  r22,0x00      \n\t"
-    "call if_s_write    \n\t"
-
-    "call flush_spi_buff   \n\t"
-    "cbi 5,2         \n\t"
-
-    ";cli             \n\t"
- 
-    "ldi r24,0x50   \n\t"    //SPI割り込みのみ停止、Serialの受信割り込みは続ける
-    "out 0x2c,r24   \n\t"
+    " call flush_spi_buff     \n\t"
+    " cbi 5,2                 \n\t"
 
 
-
-    "in r24,0x2e      \n\t"
-    "ldi r24,0x07  \n\t"
-    "out 0x2E,r24     \n\t"
-
-    "call wait_16clock  \n\t"
-//    "in  r24,0x2d     \n\t"
-//    "sbrs r24,7     \n\t"
-//    "rjmp .-6     \n\t"
-//    "in r24,0x2e      \n\t"
-    
-
-    "ldi r24,0x90  \n\t"
-    "out 0x2E,r24     \n\t"
-    "call wait_16clock  \n\t"
-    
-//    "in  r24,0x2d     \n\t"
-//    "sbrs r24,7     \n\t"
-///   "rjmp .-6     \n\t"
-//    "in r24,0x2e      \n\t"
-
-    " ldi r31,hi8(tone_reg)     \n\t"
-    " ldi r30,lo8(tone_reg)     \n\t"
+    " ldi r24,0x50            \n\t"    //SPI割り込みのみ停止、Serialの受信割り込みは続ける
+    " out 0x2c,r24            \n\t"
 
 
-
-    "Write60   \n\t"      // 60*8で４８０回書き込み
-    "Write60   \n\t"
-    "Write60   \n\t"
-    "Write60   \n\t"
-    "Write60   \n\t"
-    "Write60   \n\t"
-    "Write60   \n\t"
-    "Write60   \n\t"
-
-    /*
-
-            "ldi r25,240         \n\t"
-            "loop1:   \n\t"
-            "  ld  r24,Z+   \n\t"
-            "  out 0x2E,r24   \n\t"
-            "in  r24,0x2d     \n\t"
-            "sbrs r24,7     \n\t"
-            "rjmp .-6     \n\t"
-            ";in r24,0x2e      \n\t"
-            "subi r25,1  \n\t"
-            "brne loop1 \n\t"
+    " in r24,0x2e             \n\t"
+    " ldi r24,0x07            \n\t"
+    " out 0x2E,r24            \n\t"
+    " call wait_16clock       \n\t"
 
 
+    " ldi r24,0x90            \n\t"
+    " out 0x2E,r24            \n\t"
+    " call wait_16clock       \n\t"
 
 
-            "ldi r25,240          \n\t"
-            "loop2:   \n\t"
-            "ld  r24,Z+   \n\t"
-             "  out 0x2E,r24   \n\t"
-            "in  r24,0x2d     \n\t"
-            "sbrs r24,7     \n\t"
-            "rjmp .-6     \n\t"
+    " ldi r31,hi8(tone_reg)   \n\t"
+    " ldi r30,lo8(tone_reg)   \n\t"
 
-            ";in r24,0x2e      \n\t"
-
-            "subi r25,1  \n\t"
-            "brne loop2 \n\t"
-    */
+    ".rept 480  \n\t"         //480回 write_wait_dataを呼ぶ
+    " call write_wait_data   \n\t"
+    ".endr                    \n\t"
 
 
+    " rjmp .                  \n\t"
+    " rjmp .                  \n\t"
+    " rjmp .                  \n\t"
 
 
+    " ldi r24,0x80            \n\t"
+    " out 0x2E,r24            \n\t"
+    " call wait_16clock       \n\t"
 
-    "rjmp .  \n\t"
-    "rjmp .  \n\t"
-    "rjmp .  \n\t"
-
-
-    "ldi r24,0x80  \n\t"
-    "out 0x2E,r24     \n\t"
-    "call wait_16clock  \n\t"
- //   "in  r24,0x2d     \n\t"
-//    "sbrs r24,7     \n\t"
-//    "rjmp .-6     \n\t"
-//    "in r24,0x2e      \n\t"
-
-    "ldi r24,0x03  \n\t"
-    "out 0x2E,r24     \n\t"
-    "call wait_16clock     \n\t"
-   // "in  r24,0x2d     \n\t"
-    //"sbrs r24,7     \n\t"
-   // "rjmp .-6     \n\t"
-    //"in r24,0x2e      \n\t"
-
-    
-    "ldi r24,0x81  \n\t"
-    "out 0x2E,r24     \n\t"
-    ";call wait_16clock      \n\t"
-   "in  r24,0x2d     \n\t"
-    "sbrs r24,7     \n\t"
-    "rjmp .-6     \n\t"
-  //  "in r24,0x2e      \n\t"
-
-    "ldi r24,0x80  \n\t"
-    "out 0x2E,r24     \n\t"
-   "in  r24,0x2d     \n\t"
-    "sbrs r24,7     \n\t"
-    "rjmp .-6     \n\t"
-    "in r24,0x2e      \n\t"
-    "sbi 5,2        \n\t"
+    " ldi r24,0x03            \n\t"
+    " out 0x2E,r24            \n\t"
+    " call wait_16clock       \n\t"
 
 
-    ";sei            \n\t"
-    "ldi r24,0xd0    \n\t"
-    "out 0x2c,r24    \n\t"
+    " ldi r24,0x81            \n\t"
+    " out 0x2E,r24            \n\t"
+
+    " in  r24,0x2d            \n\t"
+    " sbrs r24,7              \n\t"
+    " rjmp .-6                \n\t"
+
+
+    " ldi r24,0x80            \n\t"
+    " out 0x2E,r24            \n\t"
+    " in  r24,0x2d            \n\t"
+    " sbrs r24,7              \n\t"
+    " rjmp .-6                \n\t"
+    " in r24,0x2e             \n\t"
+    " sbi  5,2                \n\t"
+
+    " ldi r24,0xd0            \n\t"
+    " out 0x2c,r24            \n\t"
 
 
   );
-
-
-
 
 
 

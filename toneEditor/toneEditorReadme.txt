@@ -62,7 +62,7 @@ COMポート指定
 	waveload:	カレント音色へファイルから読み込み
 
 	Write to text: 下部テキストエリアへカレント音色を(１０進ベタcsv、YAMAHA SysEX,DominoSysEX形式で)表示
-							左ラジオボタンで選択。
+							ボタンで選択。
 
 	Read from Text: 下部テキストエリアからカレント音色へ読み込み
 

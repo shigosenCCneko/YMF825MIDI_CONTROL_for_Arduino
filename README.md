@@ -2,7 +2,8 @@
 
 Arduino Uno を使いYMF825をMIDIデバイスとしてコントロールしてみました。  
 USBシリアルMIDIデバイスとして振る舞うので、付属のToneEditorがMIDIシリアルブリッジとして働きます  
-LoopMIDI等の仮想MIDIポートを利用して接続してください。  
+LoopMIDI等の仮想MIDIポートを利用して接続してください。
+![-24bit -10-2](https://user-images.githubusercontent.com/28349102/40617916-c41bf018-62ca-11e8-8e40-fd6e0bc3234d.jpg)
 接続速度は2,000,000Baud Rateになっています、別にシリアルMIDIブリッジを通して動かす場合は  
 MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。  
 

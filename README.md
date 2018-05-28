@@ -1,10 +1,10 @@
 # YMF825をArduino UnoでMIDIデバイスとしてコントロールする
 
-Arduino Uno を使いYMF825をMIDIデバイスとしてコントロールしてみました。
-USBシリアルMIDIデバイスとして振る舞うので、付属のToneEditorがMIDIシリアルブリッジとして働きます
-LoopMIDI等の仮想MIDIポートを利用して接続してください。
-接続速度は2,000,000Baud Rateになっています、別にシリアルMIDIブリッジを通して動かす場合は
-MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
+Arduino Uno を使いYMF825をMIDIデバイスとしてコントロールしてみました。  
+USBシリアルMIDIデバイスとして振る舞うので、付属のToneEditorがMIDIシリアルブリッジとして働きます  
+LoopMIDI等の仮想MIDIポートを利用して接続してください。  
+接続速度は2,000,000Baud Rateになっています、別にシリアルMIDIブリッジを通して動かす場合は  
+MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。  
 
 ブリッジで使用するMIDIポート, COMポートはプロパティファイル"ymf825.properties"で指定します
 

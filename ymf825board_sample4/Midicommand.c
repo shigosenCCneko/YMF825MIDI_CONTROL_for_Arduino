@@ -2,6 +2,7 @@
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 #include "Midicommand.h"
+#include "sintbl.h"
 
 
 #define DATA_LEN_825	30

@@ -629,8 +629,9 @@ void SetupHardware(void)
   UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) ;
 
   UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
-  //UBRR0 = 0x0007;   //250,000
-  // UBRR0 = 0x0010;   //115,200
+ //UBRR0 = 0x0007;   //250,000
+  //UBRR0 = 0x0022;   //57600
+ // UBRR0 = 0x0010;   //115200
   UBRR0 = 0x0000;   //2,000,000
 
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);

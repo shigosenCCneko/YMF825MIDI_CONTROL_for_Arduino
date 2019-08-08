@@ -6,7 +6,8 @@
  */ 
 
 #include<avr/io.h>
-
+#include "suart.h"
+#include "xprintf.h"
 #ifndef MANAGETONE_H_
 #define MANAGETONE_H_
 
@@ -46,17 +47,21 @@ struct VoiceChannel{
 struct MidiCH{
 	uint8_t voice_no;
 	uint8_t hold;
-	uint16_t pitchbend;
+	//uint16_t pitchbend;
+
+  uint8_t s_modulation_pitch;
+  uint8_t s_modulation_depth;
+  uint8_t s_modulation_sintbl_pitch;
+  uint8_t s_modulation_sintbl_ofs;
+ 
 	uint8_t modulation;
 	uint8_t partlevel;
 	uint8_t expression;
-	uint8_t panpot_L;
-	uint8_t panpot_R;
+
 	uint8_t pitch_sens;
 	uint8_t reg_12;	//0x0c
 	uint8_t reg_16;	//0x10
-	//uint8_t reg_16R;
-	//uint8_t reg_16L;
+
 	uint8_t reg_17;	//0x11
 	uint8_t reg_18;	//0x12
 	uint8_t reg_19;	//0x13

@@ -43,29 +43,25 @@ SPI_STC_vect:
   in r0, _SFR_IO_ADDR(SREG) 
   push r0
 
-  push r24
-  push r30
-  push r31
-
-  lds r24,send_buf_byte
-  subi r24,1
-  sts send_buf_byte,r24
-  tst r24
+  lds r0,send_buf_byte
+  dec r0
   breq NO_DATA
 
-  sbrs r24,0
+  sts send_buf_byte,r0
+  push r30
+  push r31
+  sbrs r0,0
   rjmp FIRST_BYTE
 
   lds r30,spi_send_read
   ldi r31,hi8(spi_sendData)
-  ld r24,Z
-  out _SFR_IO_ADDR(SPDR),r24
-  inc r30
+  ld r0,Z+
+  out _SFR_IO_ADDR(SPDR),r0
+  //inc r30
   sts spi_send_read,r30
 
   pop r31
   pop r30
-  pop r24
   pop r0
   out _SFR_IO_ADDR(SREG),r0
   pop r0
@@ -73,10 +69,8 @@ SPI_STC_vect:
   reti
 
 NO_DATA:  
+  sts send_buf_byte,r0
   sbi 0x5,2
-  pop r31
-  pop r30
-  pop r24
   pop r0
   out _SFR_IO_ADDR(SREG),r0
   pop r0
@@ -84,20 +78,18 @@ NO_DATA:
   reti
 
 FIRST_BYTE: 
-  sbi 0x5,2       ;SSをHI
+  sbi 0x5,2       //SSをHI
 
   lds r30,spi_send_read
-  cbi 0x5,2         ;1 SPI clock 以上空けてSSをLOにする
+  cbi 0x5,2         //1 SPI clock 以上空けてSSをLOにする
   ldi  r31,hi8(spi_sendData)
 
-  ld r24,Z
-  out _SFR_IO_ADDR(SPDR),r24
-
-  inc r30
+  ld r0,Z+
+  out _SFR_IO_ADDR(SPDR),r0
+  //inc r30
   sts spi_send_read,r30
   pop r31
   pop r30
-  pop r24
   pop r0
   out _SFR_IO_ADDR(SREG),r0
   pop r0
@@ -115,8 +107,7 @@ FIRST_BYTE:
 .func
 if_s_write:
 
-  cli
-  
+ 
   lds r25,send_buf_byte
   lds r30,spi_send_write
   
@@ -124,16 +115,14 @@ if_s_write:
   rjmp ON_SEND    //送信中
 
   ldi r31,hi8(spi_sendData)
-  st Z,r22
-  inc r30
+  st Z+,r22
   sts spi_send_write,r30
   ldi r25,2
   sts send_buf_byte,r25
   cbi 0x5,2
   out _SFR_IO_ADDR(SPDR),r24
-//cbi _SFR_IO_ADDR(PORTC),7
 
-  sei
+//  sei
   ret
 
 
@@ -141,23 +130,76 @@ ON_SEND:        //送信中、バファに積むだけ
   ldi r31,hi8(spi_sendData)
   st Z,r24
   inc r30
-  st Z,r22
-  inc r30
+  st Z+,r22
   sts spi_send_write,r30
 
   subi r25,(-2)
   sts  send_buf_byte,r25
 
-/*ldi r24,4
-sub r24,r25
-ori r24,0x40
-out _SFR_IO_ADDR(PORTC),r24*/
-
-  sei
+//  sei
   ret     
 
 
 .endfunc
+
+
+
+
+
+
+
+//
+//  if_chs_write(uint8_t ch, uint8_t adr,uint8_t dat)
+//
+.global if_chs_write  
+.func
+if_chs_write:
+
+  cli
+  
+  lds r25,send_buf_byte
+  lds r30,spi_send_write
+  ldi r23,0x0b
+  
+  cpse r25,ZERO
+  rjmp CH_ON_SEND    //送信中
+
+
+  cbi 0x5,2
+  ldi r31,hi8(spi_sendData)  
+  out _SFR_IO_ADDR(SPDR),r23
+
+  st Z,r24
+  inc r30
+  st Z,r22
+  inc r30
+  st Z+,r20
+  sts spi_send_write,r30
+  ldi r25,4
+  sts send_buf_byte,r25
+  sei
+ ret
+
+CH_ON_SEND:        //送信中、バファに積むだけ
+
+  ldi r31,hi8(spi_sendData)
+  st Z,r23
+  inc r30
+  st Z,r24
+  inc r30
+  st Z,r22
+  inc r30
+  st Z+,r20
+  sts spi_send_write,r30
+  subi r25,(-4)
+  sts send_buf_byte,r25
+  sei
+ret
+
+
+.endfunc
+
+
 
 /*
  *  void flush_spi_buff(void)
@@ -184,9 +226,12 @@ cli
 sei
   cpi r25,0
   brne serial_read
-  
-  
-  
+  lds r25,TCNT1L
+  cpi r25,0x09
+  brcs usart_read
+  clr r25
+  sts TCNT1L,r25
+call software_modulation  
   rjmp usart_read
 
 serial_read:
@@ -210,24 +255,24 @@ USART_RX_vect:
   in r0, _SFR_IO_ADDR(SREG) 
   push r0
 
-  push r24
+
   push r30
   push r31
   
   lds r30,usart_write_p
   ldi r31,hi8(usart_recvData)  
   
-  lds r24,UDR0
-  st Z+,r24
+  lds r0,UDR0
+  st Z+,r0
   
   sts usart_write_p,r30
-  lds r24,usart_cnt
-  inc r24
-  sts usart_cnt,r24
+  lds r0,usart_cnt
+  inc r0
+  sts usart_cnt,r0
   
   pop r31
   pop r30
-  pop r24
+
   pop r0
   out _SFR_IO_ADDR(SREG),r0
   pop r0

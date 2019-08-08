@@ -73,15 +73,17 @@ void write_burst() {
   int i;
 
   asm(
-
     " ldi  r24,0x08           \n\t"
     " ldi  r22,0x16           \n\t"
+    " cli                     \n\t"
     " call if_s_write         \n\t"
+    " sei                     \n\t"
 
     " ldi  r24,0x08           \n\t"
     " ldi  r22,0x00           \n\t"
+    " cli                     \n\t"    
     " call if_s_write         \n\t"
-
+    " sei                     \n\t"
     " call flush_spi_buff     \n\t"
     " cbi 5,2                 \n\t"
 
@@ -141,10 +143,7 @@ void write_burst() {
 
     " ldi r24,0xd0            \n\t"
     " out 0x2c,r24            \n\t"
-
-
   );
-
 
 
   voice_top_addr = 0;
@@ -164,31 +163,33 @@ void write_burst() {
     rel_optval[i] = ((240 - k) >> 6);
     voice_top_addr += 30;
   }
-
-
 }
 
-void lwrite_burst() {
-  //int voice_top_addr;
-  //char k,l,m,alg;
+
+
+
+void write_burst2(){
+  int voice_top_addr;
+  char k,l,m,alg;
   int i;
   char *tone;
   tone = tone_reg;
+  
+  cli();
+  if_s_write(0x08,0x16);
 
-
-  if_s_lwrite(0x08, 0x16);
-
-  if_s_lwrite(0x08, 0x00);
+  if_s_write(0x08,0x00);
+  sei();
   flush_spi_buff();
   //while(send_buf_byte>0);
-
-  wrl_lo();
+  
+  wr_lo();
   cli();
   send_atmega(0x07);
-  send_atmega(0x90);
+  send_atmega(0x90);  
 
-  for (i = 0; i < 480; i++) {
-
+  for(i = 0;i<480;i++){
+    
     send_atmega(*tone);
     tone++;
 
@@ -197,8 +198,8 @@ void lwrite_burst() {
   send_atmega(0x03);
   send_atmega(0x81);
   send_atmega(0x80);
-  wrl_hi();
+
+  wr_hi();
+  
   sei();
 }
-
-

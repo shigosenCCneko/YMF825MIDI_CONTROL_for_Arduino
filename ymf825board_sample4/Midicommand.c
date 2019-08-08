@@ -48,25 +48,22 @@ extern uint8_t tone_reg[480];
 
 
 
-uint8_t pan_level[32] = {27, 27, 28, 28, 29, 29, 30, 30, 30, 31, 31, 30, 29, 29, 29, 28,
-                         26, 25, 24, 23, 21, 18, 17, 14, 12, 11, 9, 7, 6, 4, 2, 0
-                        };
 
 int eeprom_no = 0;				//Selected channel
 char *eeprom_p_midi = 0;			//eeprom read pointer;
 char channelVal;				// Channel value
 
-//char  modulation_depth[16];	//modulation
-//char  modulation_pitch[16];	//modulation
-//char  modulation_cnt[16];    //modulation
-//char  modulation_tblpointer[16]; //sin
+extern char  modulation_depth[16];	//modulation
+extern char  modulation_pitch[16];	//modulation
+extern char  modulation_cnt[16];    //modulation
+extern char  modulation_tblpointer[16]; //sin
 
 uint8_t rpn_msb[16];
 uint8_t rpn_lsb[16];
 
-//char  sin_pointer[16];
-//char  sin_pitch[16];
-//char  sin_tbl_offs[16];
+extern char  sin_pointer[16];
+extern char  sin_pitch[16];
+extern char  sin_tbl_offs[16];
 
 uint8_t play_mode = 1;			// state of channel 1 [mono,mul,hum]
 uint8_t hid_res_mode = 0;
@@ -135,10 +132,10 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
     case MIDI_NOTE_ON:
 
+
       ch = midi_data1 & 0x0f;
       if (midi_data3 == 0) {
         note_off_func(ch, midi_data2);
-
       } else {
 
         if (play_mode == 1) {
@@ -168,6 +165,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
       ch = midi_data1 & 0x0f;
 
       note_off_func(ch, midi_data2);
+      
       break;
 
 
@@ -212,8 +210,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
             }
 
           } else {
-            if_s_write(0x0B, ch);
-            if_s_write(0x10, k);
+            if_chs_write(ch,0x10, k);
 
           }
           break;
@@ -234,8 +231,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
               change_modulation(ch + 8, midi_data3);
             }
           } else {
-            if_s_write(0x0B, ch);
-            if_s_write(0x11, midi_data3);
+            if_chs_write(ch,0x11, midi_data3);
           }
           break;
 
@@ -262,8 +258,7 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
               change_part_level(ch + 8, k);
             }
           } else {
-            if_s_write(0x0B, ch);
-            if_s_write(0x10, k);
+            if_chs_write(ch,0x10, k);
 
           }
           break;
@@ -318,72 +313,62 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
 
         case	10:				//
 
-          m = midi_data3 >> 2;
-          midi_ch[ch].panpot_L = pan_level[m];
-          midi_ch[ch].panpot_R = pan_level[31 - m];
-          midi_ch[ch].panpot_L = 31;
-          midi_ch[ch].panpot_R = 31;
-
-          //
-
-          //m =  j >> 3;
-          //midi_ch[ch].panpot_L = 16+m;
-          //midi_ch[ch].panpot_R = 31-m;
-          //
 
 
 
-          //m = midi_ch[ch].partlevel;
-          //m = m << 2;
-          //m = pgm_read_byte(&(divtbl[(int)m][(int) midi_ch[(int)ch].expression]));
-          //change_part_level(ch,m);
 
           break;
-        /*
-        					case 59:	//if(i == 59){		//software modulation depth
-        						j = ((j & 0xfc)>>1);
-        						modulation_depth[ch] = j;
-        						if(play_mode == 3){
-        							modulation_depth[ch+8] = j;
-        						}
-        						break;
 
-        					case 60://if(i == 60){
-        						for(l = 0;l<channelVal;l++){
-        							sin_pitch[l] = j;
-        						}
-        						break;
 
-        					case 61://if(i == 61){
-        						for(l = 0;l<channelVal;l++){
-        							sin_tbl_offs[(int)l] = (j<<5) & 0xe0;
-        						}
-        						break;
 
-        					case 31://if(i == 31){ //modulation sin table pitch
-        						sin_pitch[ch] = j ;
-        						if( play_mode == 3   ){
-        							sin_pitch[ch+8] = j;
-        						}
-        						break;
 
-        					case 32: //if(i == 32){ //modulation sin table pitch
-        						sin_tbl_offs[ch] = (j<<5) & 0xe0;
-        						if( play_mode == 3   ){
-        							sin_tbl_offs[ch+8] = (j<<5) & 0xe0;
-        						}
-        						break;
+          case 59:  //if(i == 59){    //software modulation depth
 
-        					case 76: //if(i == 76){  //
-        						modulation_pitch[ch] = j ;
-        						modulation_cnt[ch] = modulation_pitch[ch];
-        						if( play_mode == 3  ){
+            midi_ch[ch].s_modulation_depth = midi_data3;
 
-        							modulation_pitch[ch+8] = j;
-        							modulation_cnt[ch+8] = modulation_pitch[ch+1];
-        						}
-        						break;
-        */
+            break;        
+          
+          case 60://if(i == 60){
+          
+            for(l = 0;l<channelVal;l++){
+
+              midi_ch[l].s_modulation_sintbl_pitch =midi_data3;
+            }
+            break;
+            
+          case 61://if(i == 61){
+            
+            for(l = 0;l<channelVal;l++){
+
+              midi_ch[l].s_modulation_sintbl_ofs = midi_data3;
+            }
+            break;
+          case 58: //all software moduration
+            for(l = 0;l<channelVal;l++){
+              midi_ch[l].s_modulation_depth = midi_data3;
+            }
+            break;
+              
+          case 31://if(i == 31){ //modulation sin table pitch
+
+            midi_ch[ch].s_modulation_sintbl_pitch = midi_data3;
+ 
+            break;
+              
+          case 32: //if(i == 32){ //modulation sin table pitch
+
+            midi_ch[ch].s_modulation_sintbl_ofs = midi_data3;
+ 
+            break;
+            
+          case 76: //if(i == 76){  // モジュレーションpitch
+
+            //modulation_pitch[ch] = midi_data3 ;
+            //modulation_cnt[ch] = modulation_pitch[ch];
+            midi_ch[ch].s_modulation_pitch = midi_data3;
+ xmit(0x0a);               
+xprintf("smod%x-%x",midi_data2,midi_data3);
+            break;
 
         default:
           break;
@@ -474,8 +459,9 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         break;
 
       case 1:
-
+        cli();
         if_s_write(Data[2], Data[3]);
+        sei();
         break;
 
 
@@ -540,6 +526,15 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         tone_reg[Data[1] * 30 + Data[2]] = Data[3];
         break;
 
+      case 16:  //Note On
+        f = get_voice(Data[1],Data[2],Data[3]);
+        note_on(Data[1],f,Data[2],Data[3],midi_ch[Data[1]].voice_no);
+        break;
+
+      case 17:
+        note_off_func(Data[1],Data[2]);
+        break;
+        
  
 
       default:
@@ -632,11 +627,10 @@ void SetupHardware(void)
   UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
  //UBRR0 = 0x0007;   //250,000
   //UBRR0 = 0x0022;   //57600
- // UBRR0 = 0x0010;   //115200
+//  UBRR0 = 0x0010;   //115200
   UBRR0 = 0x0000;   //2,000,000
 
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);
-  //SPSR = 0;  //4Mh
   SPSR = (1 << SPI2X); //8MH
   PINB = 0xFF;
   PORTB = 0x0C;
@@ -644,28 +638,32 @@ void SetupHardware(void)
   DDRB = 0x2C;
   SPCR |= (1 << SPIE);
 
-  _delay_ms(50);
+  _delay_ms(150);
   //usart_spi_init();
-  _delay_ms(50);
+  _delay_ms(150);
   reset_ymf825();
-  _delay_ms(10);
+  _delay_ms(100);
 
   startup_sound();
 
   setChannelDefault();
-  //set_timer_intrupt();
+  set_timer_intrupt();
+
 }
 void keyon(unsigned char fnumh, unsigned char fnuml) {
+  cli();
   if_s_write( 0x0B, 0x00 );//voice num
   if_s_write( 0x0C, 0x54 );//vovol
   if_s_write( 0x0D, fnumh );//fnum
   if_s_write( 0x0E, fnuml );//fnum
   if_s_write( 0x0F, 0x40 );//keyon = 1
-
+  sei();
 }
 
 void keyoff(void) {
+  cli();
   if_s_write( 0x0F, 0x00 );//keyon = 0
+  sei();
 }
 
 
@@ -675,20 +673,18 @@ void setChannelDefault() {
   val = 16;
 
   for (i = 0; i < 16; i++) {
-    //rpn_msb[i] = 0;
-    //rpn_lsb[i] = 0;
 
     rpn_msb[i] = 127;
     rpn_lsb[i] = 127;
 
-    //modulation_depth[i] = 20;
-    //modulation_pitch[i] = 21;	//modulation
-    //modulation_cnt[i] = 0;    //modulation
+    modulation_depth[i] = 8;
+    modulation_pitch[i] = 40;	//modulation
+   modulation_cnt[i] = 0;    //modulation
 
-    //modulation_tblpointer[i] = 0;
-    //sin_pointer[i] = 0;
-    //sin_pitch[i] = 3;
-    //sin_tbl_offs[i] = (7<< 5);
+    modulation_tblpointer[i] = 0;
+    sin_pointer[i] = 0;
+    sin_pitch[i] = 3;
+    sin_tbl_offs[i] = 5;
   }
 
   init_midich();
@@ -702,57 +698,19 @@ void mem_reset(void) {
 }
 
 void set_timer_intrupt(void) {
-  OCR1A = 0x18;
+  OCR1A = 0x88;
   //OCR1A = 0x06;
   TCCR1A  = 0b00000000;
-  TIMSK1 = (1 << OCIE1A); //compare match A interrupt
+  //TIMSK1 = (1 << OCIE1A); //compare match A interrupt
 
   TCCR1B  = (1 << WGM12);
-  //TCCR1B |= (1 << CS12)|(1 << CS10);  // CTC mode top = OCR1A
-
   TCCR1B |= (1 << CS12);  // CTC mode top = OCR1A
 
 
   sei();
 }
 
-//#define USE_C_INTRUPT
 
-#ifdef USE_C_INTRUPT
-ISR(TIMER1_COMPA_vect) {
-
-  uint8_t i, c, d, e;
-
-
-  for (i = 0; i < channelVal; i++) {
-
-    //c = modulation_cnt[i];
-
-    if (c != 0) {
-      c--;
-      if (c == 0) {
-        //PORTC ^= 0x80;
-        //modulation_cnt[i] = modulation_pitch[i];
-        //c = modulation_tblpointer[i];
-        c++;
-        c &= 0x01f;
-        modulation_tblpointer[i] = c;
-        d = modulation_depth[i];
-        e = pgm_read_byte(&(sin_tbl[(int)d][(int)c]));
-
-        e = e + midi_ch[ym825_voice_ch[i].midi_ch].reg_18; //PitchBend hi
-        if_s_write(0x0b, i);
-        if_s_write(0x12, e);
-      } else {
-        modulation_cnt[i] = c;
-      }
-
-    }
-
-  }
-
-}
-#endif
 
 
 void reset_ymf825() {
@@ -770,10 +728,81 @@ void reset_ymf825() {
   wr_hi();
   wr_hi();
   _delay_ms(100);
-
-  if_s_write(0x1D, 0);	//5V
-
+  
+  cli();  
+  if_s_write(0x1D,0); //5V  
   if_s_write( 0x02, 0x0e );
+  sei();
+  flush_spi_buff();
+   _delay_ms(1);
+   
+   cli();
+  if_s_write( 0x00, 0x01 );//CLKEN
+  if_s_write( 0x01, 0x00 ); //AKRST
+  if_s_write( 0x1A, 0xA3 );
+  sei();
+  flush_spi_buff();
+   _delay_ms(1);
+   
+   cli();
+  if_s_write( 0x1A, 0x00 );
+  sei();
+  flush_spi_buff();
+   _delay_ms(30);
+   
+   cli();
+  if_s_write( 0x02, 0x00 );
+  if_s_write( 0x19, 0xac );//MASTER VOL
+  if_s_write( 0x1B, 0x3F );//interpolation
+  if_s_write(0x1b,0x00);
+ 
+  if_s_write( 0x14, 0x00 );//interpolation
+  if_s_write( 0x03, 0x01 );//Analog Gain 
+  if_s_write( 0x08, 0xF6 );
+  sei();
+  flush_spi_buff();
+   _delay_ms(21);
+   
+   cli();
+  if_s_write( 0x08, 0x00 );
+  if_s_write( 0x09, 0xd0 );
+  if_s_write( 0x0b, 0x00 );
+  if_s_write( 0x17, 0x40 );//MS_S
+  if_s_write( 0x18, 0x00 ); 
+  if_s_write(0x20,0x0f);
+  sei();
+  flush_spi_buff();
+  _delay_us(10);
+  
+  cli();
+  if_s_write(0x21,0x0f);
+  sei();
+  flush_spi_buff();
+  _delay_us(10);
+  
+  cli();
+  if_s_write(0x22,0x0f);
+  sei();
+  flush_spi_buff(); 
+  _delay_us(10);
+
+
+
+
+
+
+
+
+/*
+ 
+  _delay_ms(100);
+
+  cli();
+  if_s_write(0x1D, 0);	//5V
+  
+  if_s_write( 0x02, 0x0e );
+  sei();
+   flush_spi_buff();
   _delay_ms(1);
   if_s_write( 0x00, 0x01 );//CLKEN
   if_s_write( 0x01, 0x00 ); //AKRST
@@ -784,7 +813,7 @@ void reset_ymf825() {
   if_s_write( 0x02, 0x00 );
   //add
   //if_s_write( 0x19, 0xcc );//MASTER VOL
-  if_s_write( 0x19, 0x9c );//MASTER VOL
+  if_s_write( 0x19, 0xac );//MASTER VOL
   if_s_write( 0x1B, 0x3F );//interpolation
   if_s_write(0x1b, 0x00);
 
@@ -818,13 +847,11 @@ void reset_ymf825() {
   flush_spi_buff();
   _delay_us(10);
 
-
-
+*/
+sei();
   for (i = 0; i < 16; i++) {
 
-    if_s_write(0x0b, i);			//
-
-    if_s_write(0x14, 0);
+    if_chs_write(i,0x14, 0);
     tone_reg[(30 * i)] = 0x01;	//BO
     tone_reg[(30 * i) + 1] = 0x83;	//LFO,ALG
 
@@ -863,8 +890,9 @@ void reset_ymf825() {
 
   }
 
+ 
   write_burst();
-
+ _delay_ms(300);
 }
 
 void startup_sound(void) {
@@ -906,8 +934,8 @@ void usart_spi_init() {
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1) | (1 << SPIE);
   //		SPCR = (1<<SPE)|(1<<MSTR)|(0<<SPR0)|(0<<SPR1);
 
-  //SPSR = (1<< SPI2X);	//8MH
-  SPSR = 0;  //4Mh
+  SPSR = (1<< SPI2X);	//8MH
+  //SPSR = 0;  //4Mh
   c = SPDR;
 }
 void usart_spi_send(unsigned int data) {
@@ -917,91 +945,6 @@ void usart_spi_send(unsigned int data) {
   data = UDR0;
 }
 
-
-//void check_midimessage() {
-/*
-  MIDI_EventPacket_t MIDIEvent;
-  uint8_t MIDImidi_data1;
-
-  uint8_t dat1,dat2;
-  if(send_cnt == 0)
-	return;
-
-
-  send_cnt = 30;
-  MIDImidi_data1 = MIDI_midi_data1_SYSEX_START_3BYTE;
-  dat1 = eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-  MIDIEvent = (MIDI_EventPacket_t)
-  {
-	.Event       = MIDI_EVENT(1, MIDImidi_data1),
-
-	.Data1       = 0xF0,
-	.Data2       = (dat1 >> 4),
-	.Data3       = dat1 & 0x0f,
-  };
-  send_cnt--;
-  MIDI_Device_SendEventPacket(&Keyboard_MIDI_Interface, &MIDIEvent);
-
-  do{
-
-	dat1 = eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-	dat2= eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-
-	MIDImidi_data1 = MIDI_midi_data1_SYSEX_3BYTE;
-
-	MIDIEvent = (MIDI_EventPacket_t)
-	{
-		.Event       = MIDI_EVENT(1, MIDImidi_data1),
-
-		.Data1       = (dat1 >> 4),
-		.Data2       = dat1 & 0x0f,
-		.Data3       = (dat2 >> 4),
-	};
-	MIDI_Device_SendEventPacket(&Keyboard_MIDI_Interface, &MIDIEvent);
-
-	dat1 = eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-	MIDIEvent = (MIDI_EventPacket_t)
-	{
-		.Event       = MIDI_EVENT(1, MIDImidi_data1),
-
-		.Data1       = dat2 & 0x0f,
-		.Data2       = (dat1 >>4),
-		.Data3       = dat1 & 0x0f,
-	};
-	MIDI_Device_SendEventPacket(&Keyboard_MIDI_Interface, &MIDIEvent);
-
-	send_cnt = send_cnt -3;
-  }while(send_cnt > 2);
-  send_cnt = 0;
-
-  dat1 = eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-  dat2= eeprom_read_byte( (uint8_t*)(eeprom_p_midi ++));
-
-  MIDIEvent = (MIDI_EventPacket_t)
-  {
-	.Event       = MIDI_EVENT(1, MIDImidi_data1),
-
-	.Data1       = (dat1 >> 4),
-	.Data2       = dat1 & 0x0f,
-	.Data3       = (dat2 >> 4),
-  };
-  MIDI_Device_SendEventPacket(&Keyboard_MIDI_Interface, &MIDIEvent);
-
-  MIDImidi_data1 = MIDI_midi_data1_SYSEX_END_3BYTE;
-  MIDIEvent = (MIDI_EventPacket_t)
-  {
-	.Event       = MIDI_EVENT(1, MIDImidi_data1),
-
-	.Data1       = dat2 & 0x0f,
-	.Data2       = 0,
-	.Data3       = 0xf7,
-  };
-  MIDI_Device_SendEventPacket(&Keyboard_MIDI_Interface, &MIDIEvent);
-  MIDI_Device_Flush(&Keyboard_MIDI_Interface);
-
-  //PORTC ^= 0x80;
-*/
-//}
 
 
 

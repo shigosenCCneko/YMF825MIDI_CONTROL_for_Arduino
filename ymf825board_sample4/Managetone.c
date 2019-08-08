@@ -20,7 +20,8 @@
   .
 
 */
-
+#include "suart.h"
+#include <avr/Interrupt.h>
 #include <avr/pgmspace.h>
 #include "Managetone.h"
 #include <avr/io.h>
@@ -31,20 +32,19 @@
 #define NULL 0
 
 struct VoiceChannel ym825_voice_ch[16];
-
 struct MidiCH midi_ch[16];
 extern uint8_t play_mode;
-//extern char tone_reg[480];
 
-//extern char  modulation_depth[16];	//modulation 
-////extern char  modulation_pitch[16];	//modulation
-//extern char  modulation_cnt[16];    //modulation
-//extern char  modulation_tblpointer[16]; //sin
 
-extern const char divtbl[32][32];
-char  sin_pointer[16];
-char  sin_pitch[16];
-char  sin_tbl_offs[16];
+extern char  modulation_depth[16];	//modulation 
+extern char  modulation_pitch[16];	//modulation
+extern char  modulation_cnt[16];    //modulation
+extern char  modulation_tblpointer[16]; //sin
+extern char  sin_pointer[16];
+extern char  sin_pitch[16];
+extern char  sin_tbl_offs[16];
+
+
 uint8_t voice_queue[MAX_VOICE_NUM];
 uint8_t voice_queue_top;
 uint8_t voice_queue_tail;
@@ -122,18 +122,19 @@ void init_midich(void) {
   for (i = 0; i < 16; i++) {
     midi_ch[i].voice_no = i;		// MIDI_CH == voice_no
     midi_ch[i].hold	 = FALSE;
-    midi_ch[i].pitchbend = 0x4000;
+
+    midi_ch[i].s_modulation_pitch = 50;
+    midi_ch[i].s_modulation_depth = 10;
+    midi_ch[i].s_modulation_sintbl_pitch = 0;
+    midi_ch[i].s_modulation_sintbl_ofs = 4;
+
     midi_ch[i].modulation = 0;
     midi_ch[i].partlevel = 24;
     midi_ch[i].expression = 24;
-    midi_ch[i].panpot_L = 25;
-    midi_ch[i].panpot_R = 25;
     midi_ch[i].pitch_sens = 2;
     midi_ch[i].voice_list = NULL;	//
     /*-------------------------------note  */
-    midi_ch[i].reg_16 = 0x60;	//ch_vol,expression
-    //midi_ch[i].reg_16R = 60;
-    //midi_ch[i].reg_16L = 60;
+    midi_ch[i].reg_16 = 0x30;	//ch_vol,expression
     midi_ch[i].reg_17 = 0x00;	//vib
     midi_ch[i].reg_18 = 0x08;	//pitchbend_hi
     midi_ch[i].reg_19 = 0x00;	//pitchbend_lo
@@ -147,14 +148,9 @@ int get_voice(uint8_t ch, uint8_t tone_no, uint8_t velo) {
   uint8_t voice_ch;
   struct VoiceChannel *p;
 
-
-
-  //voice_ch = NOT_GET;
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
     if (p->note_no == tone_no) {
-      //if(p->hold == TRUE){
-
       voice_ch =  p->voice_ch;
       mute(voice_ch);
 
@@ -183,6 +179,8 @@ int get_voice(uint8_t ch, uint8_t tone_no, uint8_t velo) {
   ym825_voice_ch[voice_ch].hold = FALSE;
   midi_ch[ch].voice_list = &(ym825_voice_ch[voice_ch]);
 
+
+
   return (int)voice_ch;
 }
 
@@ -210,6 +208,7 @@ int  return_voice(uint8_t ch, uint8_t tone_no) {
         voice_queue_tail = 0;
       }
       active_voice_num--;
+    
       return voice_ch;
     }
     p = &( (*p)->next);
@@ -267,9 +266,10 @@ void all_note_off(){
 }
 
 void mute(uint8_t ch) {
-  if_s_write(0x0b, ch);
-  //if_s_write(0x0F, ym825_voice_ch[ch].voice_no+0x60);
-  if_s_write(0x0F, ym825_voice_ch[ch].voice_no + 0x20);
+//  if_s_write(0x0b, ch);
+//  if_s_write(0x0F, ym825_voice_ch[ch].voice_no + 0x20);
+  if_chs_write(ch,0x0F, ym825_voice_ch[ch].voice_no + 0x20);
+  
 }
 
 
@@ -279,24 +279,25 @@ void note_on(uint8_t midich, uint8_t voicech, uint8_t note_no, uint8_t velo, uin
   uint8_t alg, k, l, m;
   uint16_t voice_top_addr;
   channel_noteno[voicech] = note_no;			//mono
-  //modulation_tblpointer[(int)voicech] = 0; // or 0x1f
-  //modulation_cnt[voicech] = modulation_pitch[voicech];
-  //sin_pointer[voicech] = 0;
+  velo = velo & 0x7c;
+   // velo = velo >>2;
+    ym825_voice_ch[voicech].release_cnt = rel_optval[voice_no];
 
-  velo = velo & 0x7C;  //  (velo >>2 ) << 2);
-  ym825_voice_ch[voicech].release_cnt = rel_optval[voice_no];
 
+
+
+  modulation_cnt[voicech] = 100;
+  modulation_tblpointer[(int)voicech] = (voicech & 0x3); // or 0x1f
+  modulation_pitch[voicech] = midi_ch[midich].s_modulation_pitch;
+  modulation_depth[voicech] = midi_ch[midich].s_modulation_depth;  
+  sin_pointer[voicech] = 0; 
+  sin_pitch[voicech] = midi_ch[midich].s_modulation_sintbl_pitch;
+  sin_tbl_offs[voicech] = midi_ch[midich].s_modulation_sintbl_ofs;
+
+cli();
   if_s_write(0x0b, voicech);
   if_s_write(0x0C,velo);  // #12
 
-/*
-  if_s_rwrite( 0x0c, (pgm_read_byte( &(divtbl[velo][ midi_ch[midich].panpot_R ]))) << 2);
-  if_s_lwrite( 0x0c, (pgm_read_byte( &(divtbl[velo][ midi_ch[midich].panpot_L ]))) << 2);
-*/
-/*
-if_s_write(0x0D, fnum_hi_tbl[note_no]);
-if_s_write(0x0E, fnum_lo_tbl[note_no]);
-*/
   if_s_write(0x0D, pgm_read_byte( &(fnum_hi_tbl[note_no])));
   if_s_write(0x0E, pgm_read_byte( &(fnum_lo_tbl[note_no])));
 
@@ -306,7 +307,7 @@ if_s_write(0x0E, fnum_lo_tbl[note_no]);
   if_s_write(0x13, midi_ch[midich].reg_19);
 
   if_s_write(0x0f, 0x40 | voice_no);
- 
+ sei();
 }
 
 void optimize_queue() {
@@ -346,22 +347,24 @@ void optimize_queue() {
     }
   }
 }
+
 void note_off(uint8_t voice_ch) {
-  //setChannel(ch);
-  if_s_write(0x0b, voice_ch);
-  if_s_write(0x0F, ym825_voice_ch[voice_ch].voice_no);
+
+  if_chs_write(voice_ch,0x0F, ym825_voice_ch[voice_ch].voice_no);
+
 
 }
 
 
 void note_off_func(int ch, char i) {
-  int f, adr;
+  int f;
 
   if (play_mode == 1) {
     f = return_voice(ch, i);
     if ( f != NOT_GET) {
       note_off(f);
     }
+  
 
   } else if (play_mode == 3) {
     if (ch < 8) {
@@ -389,8 +392,8 @@ void change_modulation(uint8_t ch, uint8_t mod) {
   midi_ch[ch].reg_17 = mod;
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
-    if_s_write(0x0b, p->voice_ch);
-    if_s_write(0x11, mod);
+    //if_s_write(0x0b, p->voice_ch);
+    if_chs_write(p->voice_ch,0x11, mod);
     p = p->next;
   }
 }
@@ -410,9 +413,11 @@ void change_pitchbend(uint8_t ch, uint8_t i, uint8_t j) {
 
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
+    cli();
     if_s_write(0x0b, p->voice_ch);
     if_s_write(0x12, hi);
     if_s_write(0x13, lo);
+    sei();
     p = p->next;
   }
 
@@ -426,8 +431,9 @@ void change_part_level(uint8_t ch, uint8_t val) {
 
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
-    if_s_write(0x0b, p->voice_ch);
-    if_s_write(0x10, val);
+ //   if_s_write(0x0b, p->voice_ch);
+ //   if_s_write(0x10, val);
+    if_chs_write(p->voice_ch,0x10,val);
     p = p->next;
   }
 }
@@ -440,8 +446,10 @@ void change_expression(uint8_t ch, uint8_t val) {
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
 
-    if_s_write(0x0b, p->voice_ch);
-    if_s_write(0x10, val);
+//    if_s_write(0x0b, p->voice_ch);
+//    if_s_write(0x10, val);
+
+      if_chs_write( p->voice_ch,0x10, val);
     p = p->next;
   }
 }
@@ -455,13 +463,13 @@ void pitch_wheel_change(char ch, char i , char j) {
   f = calc_exp(f, midi_ch[ch].pitch_sens);
 
   d = (f >> 11) & 0x001f;
-
+  cli();
   if_s_write(0x0B, ch);
   if_s_write(0x12, d);
 
   d = (f >> 4) & 0x007f;
   if_s_write(0x13, d);
-
+  sei();
 }
 
 

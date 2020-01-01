@@ -17,11 +17,8 @@ extern "C" {
 uint8_t data;
 uint8_t sysExcnt = 0;
 uint8_t dat1, dat2, dat3, com;
-uint8_t sysex_buf[65];
 
 
-
-unsigned char fm_data1, fm_data2, fm_data3, fm_data4;
 
 void setup() {
 
@@ -29,7 +26,7 @@ void setup() {
   setChannelDefault();
   optimize_queue();
 _delay_ms(10);
-xprintf("-");
+
 pinMode( 16,INPUT_PULLUP );
 pinMode( 17,INPUT_PULLUP );
   _delay_ms(400);
@@ -40,6 +37,8 @@ pinMode( 17,INPUT_PULLUP );
 
 
 void loop() {
+extern uint8_t sysex_buf[65];
+  
   while (1) {
     if(!(PINC & 0x04)){
       if(master_vol < 0xfc){

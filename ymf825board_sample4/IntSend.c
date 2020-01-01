@@ -14,31 +14,21 @@
 #include "Managetone.h"
 #include "IntSend.h"
 
-
+#include <avr/pgmspace.h>
 
 void write_burst(void);
 void flush_spi_buff(void);
-void lwrite_burst(void);
-
-
-//volatile uint8_t spi_sendData[256];    // spi
-volatile uint8_t spi_send_write = 0;      //
-volatile uint8_t spi_send_read = 0;       //
-//volatile uint8_t send_buf_byte = 0;
-
 
 
 uint8_t tone_reg[480];
-extern uint8_t career_no[8][4];
+
+extern  const   uint8_t career_no[8][4]PROGMEM  ;
 extern uint8_t carrier_val[8];
-extern uint8_t spi_sendData[256];
-//extern uint8_t spi_send_write;
-//extern uint8_t spi_send_read;
+
 extern uint8_t send_buf_byte;
 
-
-
-
+/* リリースレートの減衰値 queueの最適化用 */
+uint8_t rer_time[16] = {255,128,64,32,16,8,4,2,1,0,0,0,0,0,0,0};
 
 void send_atmega(char c) {
 
@@ -84,12 +74,12 @@ void write_burst() {
     " cli                     \n\t"    
     " call if_s_write         \n\t"
     " sei                     \n\t"
-    " call flush_spi_buff     \n\t"
+//    " call flush_spi_buff     \n\t"
     " cbi 5,2                 \n\t"
 
 
-    " ldi r24,0x50            \n\t"    //SPI割り込みのみ停止、Serialの受信割り込みは続ける
-    " out 0x2c,r24            \n\t"
+//    " ldi r24,0x50            \n\t"    //SPI割り込みのみ停止、Serialの受信割り込みは続ける
+//    " out 0x2c,r24            \n\t"
 
 
     " in r24,0x2e             \n\t"
@@ -141,8 +131,8 @@ void write_burst() {
     " in r24,0x2e             \n\t"
     " sbi  5,2                \n\t"
 
-    " ldi r24,0xd0            \n\t"
-    " out 0x2c,r24            \n\t"
+//    " ldi r24,0xd0            \n\t"
+//    " out 0x2c,r24            \n\t"
   );
 
 
@@ -160,7 +150,9 @@ void write_burst() {
         k = m;
 
     }
-    rel_optval[i] = ((240 - k) >> 6);
+/* リリースレートカウンタの残置でqueueの入れ替えをする */
+     k = k >>4;
+    rel_optval[i] = rer_time[(int)k];
     voice_top_addr += 30;
   }
 }
@@ -168,38 +160,4 @@ void write_burst() {
 
 
 
-void write_burst2(){
-  int voice_top_addr;
-  char k,l,m,alg;
-  int i;
-  char *tone;
-  tone = tone_reg;
-  
-  cli();
-  if_s_write(0x08,0x16);
 
-  if_s_write(0x08,0x00);
-  sei();
-  flush_spi_buff();
-  //while(send_buf_byte>0);
-  
-  wr_lo();
-  cli();
-  send_atmega(0x07);
-  send_atmega(0x90);  
-
-  for(i = 0;i<480;i++){
-    
-    send_atmega(*tone);
-    tone++;
-
-  }
-  send_atmega(0x80);
-  send_atmega(0x03);
-  send_atmega(0x81);
-  send_atmega(0x80);
-
-  wr_hi();
-  
-  sei();
-}

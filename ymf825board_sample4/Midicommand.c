@@ -27,9 +27,9 @@ void usart_spi_init(void);
 void usart_spi_send(unsigned int data);
 
 
-extern uint8_t tone_reg[480];
+uint8_t tone_reg[480];
 
-
+extern const PROGMEM char divtbl[32][32] ;
 //#define MAX_3MUL 3
 
 #include <avr/pgmspace.h>
@@ -40,7 +40,7 @@ extern uint8_t tone_reg[480];
 #include "divtable.h"
 
 #include <avr/interrupt.h>
-//#include "sintbl.h"
+#include "sintbl.h"
 #include "controlLine.h"
 
 
@@ -50,7 +50,7 @@ extern uint8_t tone_reg[480];
 
 
 int eeprom_no = 0;				//Selected channel
-char *eeprom_p_midi = 0;			//eeprom read pointer;
+char *readpoint_midi = 0;			//eeprom read pointer;
 char channelVal;				// Channel value
 
 extern char  modulation_depth[16];	//modulation
@@ -64,6 +64,7 @@ uint8_t rpn_lsb[16];
 extern char  sin_pointer[16];
 extern char  sin_pitch[16];
 extern char  sin_tbl_offs[16];
+extern uint8_t *sin_tbl_address[16];
 
 uint8_t play_mode = 1;			// state of channel 1 [mono,mul,hum]
 uint8_t hid_res_mode = 0;
@@ -90,13 +91,6 @@ void reset_ymf825(void);
 
 void check_midimessage();
 
-enum {Atck, Decy, Sus, Rel, Mul, Tlv, Ksl, Wave, Am, Vib, Egt, Ksr, FeedBk, Connect,
-      D1R, D2R, D1L, DT1, DT2
-     };
-
-char Data[4];
-
-
 
 void other(void) {
 
@@ -114,7 +108,7 @@ void other(void) {
 
 void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8_t midi_data3)
 {
-
+char Data[4];
   int com;
 
   uint8_t i, j, l;
@@ -366,10 +360,26 @@ void midi_command(uint8_t command, uint8_t midi_data1, uint8_t midi_data2, uint8
             //modulation_pitch[ch] = midi_data3 ;
             //modulation_cnt[ch] = modulation_pitch[ch];
             midi_ch[ch].s_modulation_pitch = midi_data3;
- xmit(0x0a);               
-xprintf("smod%x-%x",midi_data2,midi_data3);
-            break;
 
+            break;
+          
+          case 62: // モジュレーション波形テーブルセレクト
+            adr = (int)sin_tbl;
+            if(midi_data3 == 1)
+              adr = (int)tri_tbl;
+            if(midi_data3 == 2)
+              adr = (int)saw_tbl;
+
+              midi_ch[ch].s_modulation_sintbl_addr = (char *)adr;
+              break;
+
+          case 63: //ソフトモジュレーションディレイ
+            midi_data3 <<= 2;
+            if(midi_data3 == 0)
+              midi_data3 = 1;
+            
+            midi_ch[ch].s_modulation_delay = midi_data3;
+            break;  
         default:
           break;
       }		//controll change swich end
@@ -421,7 +431,7 @@ defalut:
 }
 
 void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
-
+  uint8_t Data[4];
   uint8_t a, c;
   uint8_t j;
   int f;
@@ -501,9 +511,9 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         eeprom_write_byte((uint8_t *)f, c);
         break;
       case 6: // read tone data from EEPROM
-        eeprom_p_midi = (char *)(Data[1] << 5);
+        readpoint_midi = (char *)(Data[1] << 5);
         for (f = 0; f < 30; f++) {
-          c = eeprom_read_byte((uint8_t *)(eeprom_p_midi++));
+          c = eeprom_read_byte((uint8_t *)(readpoint_midi++));
           while (!(UCSR0A & (1 << UDRE0)))
             ;
           UDR0 = c;
@@ -511,7 +521,46 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         }
         break;
 
+        case 7: //read tone data from toneMemory
+        readpoint_midi = (char *)&(tone_reg[(int)Data[1]*30]);
+         for (f = 0; f < 30; f++) {
+          c = (*readpoint_midi++);
+          while (!(UCSR0A & (1 << UDRE0)))
+            ;
+          UDR0 = c;
+          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
+        }       
+        break;
 
+
+        case 8:
+            i = Data[1];
+              sysex_mes[0] = midi_ch[i].s_modulation_pitch;
+              sysex_mes[1] = midi_ch[i].s_modulation_depth;
+              sysex_mes[2] = midi_ch[i].s_modulation_sintbl_pitch;
+              sysex_mes[3] = midi_ch[i].s_modulation_sintbl_ofs;
+              sysex_mes[5] = midi_ch[i].s_modulation_delay;
+              adr = (int)midi_ch[i].s_modulation_sintbl_addr;
+
+            j = 0;
+            if(adr ==  (int)tri_tbl)
+              j = 1;
+            if(adr ==  (int)saw_tbl)
+              j =2;
+            sysex_mes[4] = j;
+
+            readpoint_midi = (char *)sysex_mes;
+           for (f = 0; f < 30; f++) {
+            c = (*readpoint_midi++);
+           while (!(UCSR0A & (1 << UDRE0)))
+             ;
+          UDR0 = c;
+          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
+
+           }
+
+  
+              break;
       case 9:
         write_burst();
         break;
@@ -534,6 +583,54 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
       case 17:
         note_off_func(Data[1],Data[2]);
         break;
+
+            case 18: //software modulation change
+              midi_ch[(int)Data[1]].s_modulation_depth = Data[2];           
+              break;
+          
+            case 19: //software modulation pitch change
+              midi_ch[(int)Data[1]].s_modulation_sintbl_pitch = Data[2];              
+              break;
+              
+            case 20: //software modulation depth change
+              midi_ch[(int)Data[1]].s_modulation_sintbl_ofs = Data[2];          
+              break;  
+                          
+            case 21: //software modulation table select
+              switch(Data[2]){
+                case 0:
+                adr = (int)sin_tbl;
+                  break;
+                case 1:
+                adr = (int)tri_tbl;
+                  break;
+                case 2:
+                adr = (int)saw_tbl;
+                  break;
+                default:
+                adr = (int)sin_tbl;
+                
+              }
+              midi_ch[(int)Data[1]].s_modulation_sintbl_addr = (char *)adr; 
+              break;
+            case 22: //software modulation value
+              midi_ch[(int)Data[1]].s_modulation_pitch = Data[2]; 
+            
+              break;
+            case 23: //software modulation Delay set
+              i = Data[2];
+              i <<= 2;
+              if(i == 0)
+                i = 1;
+              midi_ch[(int)Data[1]].s_modulation_delay = i;
+              break;
+
+
+
+
+
+
+
         
  
 
@@ -628,6 +725,7 @@ void SetupHardware(void)
  //UBRR0 = 0x0007;   //250,000
   //UBRR0 = 0x0022;   //57600
 //  UBRR0 = 0x0010;   //115200
+// UBRR0 = 0x0001;   //1,000,000
   UBRR0 = 0x0000;   //2,000,000
 
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR0) | (0 << SPR1);
@@ -636,7 +734,7 @@ void SetupHardware(void)
   PORTB = 0x0C;
 
   DDRB = 0x2C;
-  SPCR |= (1 << SPIE);
+ // SPCR |= (1 << SPIE);
 
   _delay_ms(150);
   //usart_spi_init();
@@ -677,14 +775,15 @@ void setChannelDefault() {
     rpn_msb[i] = 127;
     rpn_lsb[i] = 127;
 
-    modulation_depth[i] = 8;
+    modulation_depth[i] = 3;
     modulation_pitch[i] = 40;	//modulation
    modulation_cnt[i] = 0;    //modulation
 
     modulation_tblpointer[i] = 0;
     sin_pointer[i] = 0;
-    sin_pitch[i] = 3;
+    sin_pitch[i] = 1;
     sin_tbl_offs[i] = 5;
+    sin_tbl_address[i] = (uint8_t *)sin_tbl;  
   }
 
   init_midich();
@@ -698,7 +797,7 @@ void mem_reset(void) {
 }
 
 void set_timer_intrupt(void) {
-  OCR1A = 0x88;
+  OCR1A = 0x30;
   //OCR1A = 0x06;
   TCCR1A  = 0b00000000;
   //TIMSK1 = (1 << OCIE1A); //compare match A interrupt
@@ -733,7 +832,7 @@ void reset_ymf825() {
   if_s_write(0x1D,0); //5V  
   if_s_write( 0x02, 0x0e );
   sei();
-  flush_spi_buff();
+ // flush_spi_buff();
    _delay_ms(1);
    
    cli();
@@ -741,13 +840,13 @@ void reset_ymf825() {
   if_s_write( 0x01, 0x00 ); //AKRST
   if_s_write( 0x1A, 0xA3 );
   sei();
-  flush_spi_buff();
+ // flush_spi_buff();
    _delay_ms(1);
    
    cli();
   if_s_write( 0x1A, 0x00 );
   sei();
-  flush_spi_buff();
+//  flush_spi_buff();
    _delay_ms(30);
    
    cli();
@@ -760,7 +859,7 @@ void reset_ymf825() {
   if_s_write( 0x03, 0x01 );//Analog Gain 
   if_s_write( 0x08, 0xF6 );
   sei();
-  flush_spi_buff();
+ // flush_spi_buff();
    _delay_ms(21);
    
    cli();
@@ -771,83 +870,24 @@ void reset_ymf825() {
   if_s_write( 0x18, 0x00 ); 
   if_s_write(0x20,0x0f);
   sei();
-  flush_spi_buff();
+//  flush_spi_buff();
   _delay_us(10);
   
   cli();
   if_s_write(0x21,0x0f);
   sei();
-  flush_spi_buff();
+ // flush_spi_buff();
   _delay_us(10);
   
   cli();
   if_s_write(0x22,0x0f);
   sei();
-  flush_spi_buff(); 
+  //flush_spi_buff(); 
   _delay_us(10);
 
 
 
 
-
-
-
-
-/*
- 
-  _delay_ms(100);
-
-  cli();
-  if_s_write(0x1D, 0);	//5V
-  
-  if_s_write( 0x02, 0x0e );
-  sei();
-   flush_spi_buff();
-  _delay_ms(1);
-  if_s_write( 0x00, 0x01 );//CLKEN
-  if_s_write( 0x01, 0x00 ); //AKRST
-  if_s_write( 0x1A, 0xA3 );
-  _delay_ms(1);
-  if_s_write( 0x1A, 0x00 );
-  _delay_ms(30);
-  if_s_write( 0x02, 0x00 );
-  //add
-  //if_s_write( 0x19, 0xcc );//MASTER VOL
-  if_s_write( 0x19, 0xac );//MASTER VOL
-  if_s_write( 0x1B, 0x3F );//interpolation
-  if_s_write(0x1b, 0x00);
-
-
-  if_s_write( 0x14, 0x00 );//interpolation
-  //if_s_write( 0x03, 0x03 );//Analog Gain
-  if_s_write( 0x03, 0x01 );//Analog Gain
-  if_s_write( 0x08, 0xF6 );
-  //if_s_write( 0x08, 0xFf );
-  flush_spi_buff();
-  _delay_ms(21);
-  if_s_write( 0x08, 0x00 );
-
-  //if_s_write( 0x09, 0xF8 );
-  if_s_write( 0x09, 0xb8 );
-  if_s_write( 0x0b, 0x00 );
-
-  if_s_write( 0x17, 0x40 );//MS_S
-  if_s_write( 0x18, 0x00 );
-
-
-  if_s_write(0x20, 0x0f);
-  flush_spi_buff();
-  _delay_us(10);
-
-  if_s_write(0x21, 0x0f);
-  flush_spi_buff();
-  _delay_us(10);
-
-  if_s_write(0x22, 0x0f);
-  flush_spi_buff();
-  _delay_us(10);
-
-*/
 sei();
   for (i = 0; i < 16; i++) {
 
@@ -892,30 +932,30 @@ sei();
 
  
   write_burst();
- _delay_ms(300);
+// _delay_ms(30);
 }
 
 void startup_sound(void) {
   // _delay_ms(50);
   keyon(0x1c, 0x11);
-  _delay_ms(30);
+  _delay_ms(20);
   keyoff();
-  _delay_ms(10);
+  _delay_ms(5);
 
   keyon(0x1c, 0x42);
-  _delay_ms(30);
+  _delay_ms(20);
   keyoff();
-  _delay_ms(10);
+  _delay_ms(5);
 
   keyon(0x1c, 0x5d);
-  _delay_ms(30);
+  _delay_ms(20);
   keyoff();
-  _delay_ms(10);
+  _delay_ms(5);
 
   keyon(0x24, 0x17);
-  _delay_ms(30);
+  _delay_ms(20);
   keyoff();
-  // _delay_ms(10);
+  // _delay_ms(5);
 
 
 }

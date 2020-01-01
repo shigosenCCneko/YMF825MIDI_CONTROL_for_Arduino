@@ -20,7 +20,8 @@
   .
 
 */
-#include "suart.h"
+
+
 #include <avr/Interrupt.h>
 #include <avr/pgmspace.h>
 #include "Managetone.h"
@@ -31,35 +32,10 @@
 #define TRUE  1
 #define NULL 0
 
-struct VoiceChannel ym825_voice_ch[16];
+
 struct MidiCH midi_ch[16];
-extern uint8_t play_mode;
-
-
-extern char  modulation_depth[16];	//modulation 
-extern char  modulation_pitch[16];	//modulation
-extern char  modulation_cnt[16];    //modulation
-extern char  modulation_tblpointer[16]; //sin
-extern char  sin_pointer[16];
-extern char  sin_pitch[16];
-extern char  sin_tbl_offs[16];
-
-
-uint8_t voice_queue[MAX_VOICE_NUM];
-uint8_t voice_queue_top;
-uint8_t voice_queue_tail;
-
-
-void keyon(uint8_t,uint8_t);
-void keyoff(void);
-
-
-
-
-int		active_voice_num;
-char channel_noteno[16];
-
-uint8_t career_no[8][4] = {
+struct VoiceChannel ym825_voice_ch[16];
+const  uint8_t career_no[8][4] = {
   {1, 0, 0, 0},
   {0, 1, 0, 0},
   {0, 1, 2, 3},
@@ -70,8 +46,38 @@ uint8_t career_no[8][4] = {
   {0, 2, 3, 0}
 };
 
+int    active_voice_num;
+char channel_noteno[16];
+
+
 uint8_t carrier_val[8] = {1, 2, 4, 2, 1, 2, 2, 3};
 uint8_t rel_optval[16];
+
+
+extern uint8_t play_mode;
+extern const PROGMEM char sin_tbl[64];
+
+extern char  modulation_depth[16];	//modulation 
+extern char  modulation_pitch[16];	//modulation
+extern char  modulation_cnt[16];    //modulation
+extern char  modulation_tblpointer[16]; //sin
+extern char  sin_pointer[16];
+extern char  sin_pitch[16];
+extern char  sin_tbl_offs[16];
+extern char  *sin_tbl_address[16];
+
+extern uint8_t voice_queue[MAX_VOICE_NUM];
+extern uint8_t voice_queue_top;
+extern uint8_t voice_queue_tail;
+
+
+void keyon(uint8_t,uint8_t);
+void keyoff(void);
+
+
+
+
+
 
 
 
@@ -123,12 +129,12 @@ void init_midich(void) {
     midi_ch[i].voice_no = i;		// MIDI_CH == voice_no
     midi_ch[i].hold	 = FALSE;
 
-    midi_ch[i].s_modulation_pitch = 50;
+    midi_ch[i].s_modulation_pitch = 23;
     midi_ch[i].s_modulation_depth = 10;
     midi_ch[i].s_modulation_sintbl_pitch = 0;
     midi_ch[i].s_modulation_sintbl_ofs = 4;
+    midi_ch[i].s_modulation_sintbl_addr = (char *)sin_tbl;
 
-    midi_ch[i].modulation = 0;
     midi_ch[i].partlevel = 24;
     midi_ch[i].expression = 24;
     midi_ch[i].pitch_sens = 2;
@@ -138,6 +144,8 @@ void init_midich(void) {
     midi_ch[i].reg_17 = 0x00;	//vib
     midi_ch[i].reg_18 = 0x08;	//pitchbend_hi
     midi_ch[i].reg_19 = 0x00;	//pitchbend_lo
+
+   midi_ch[i].s_modulation_delay = 5;  
   }
 }
 
@@ -286,15 +294,17 @@ void note_on(uint8_t midich, uint8_t voicech, uint8_t note_no, uint8_t velo, uin
 
 
 
-  modulation_cnt[voicech] = 100;
+  //modulation_cnt[voicech] = 100;
+  modulation_cnt[voicech] = midi_ch[midich].s_modulation_delay;
   modulation_tblpointer[(int)voicech] = (voicech & 0x3); // or 0x1f
   modulation_pitch[voicech] = midi_ch[midich].s_modulation_pitch;
   modulation_depth[voicech] = midi_ch[midich].s_modulation_depth;  
   sin_pointer[voicech] = 0; 
   sin_pitch[voicech] = midi_ch[midich].s_modulation_sintbl_pitch;
   sin_tbl_offs[voicech] = midi_ch[midich].s_modulation_sintbl_ofs;
+  sin_tbl_address[voicech] = (uint8_t *)midi_ch[midich].s_modulation_sintbl_addr;
 
-cli();
+//cli();
   if_s_write(0x0b, voicech);
   if_s_write(0x0C,velo);  // #12
 
@@ -307,7 +317,7 @@ cli();
   if_s_write(0x13, midi_ch[midich].reg_19);
 
   if_s_write(0x0f, 0x40 | voice_no);
- sei();
+// sei();
 }
 
 void optimize_queue() {
@@ -413,11 +423,11 @@ void change_pitchbend(uint8_t ch, uint8_t i, uint8_t j) {
 
   p = midi_ch[ch].voice_list;
   while (p != NULL) {
-    cli();
+//    cli();
     if_s_write(0x0b, p->voice_ch);
     if_s_write(0x12, hi);
     if_s_write(0x13, lo);
-    sei();
+//    sei();
     p = p->next;
   }
 
@@ -463,13 +473,13 @@ void pitch_wheel_change(char ch, char i , char j) {
   f = calc_exp(f, midi_ch[ch].pitch_sens);
 
   d = (f >> 11) & 0x001f;
-  cli();
+//  cli();
   if_s_write(0x0B, ch);
   if_s_write(0x12, d);
 
   d = (f >> 4) & 0x007f;
   if_s_write(0x13, d);
-  sei();
+ // sei();
 }
 
 

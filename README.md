@@ -14,7 +14,7 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
 
 ### コンパイル
     YMF825board_sample4以下のファイルをArduinoIDEに読み込んでください  
-    
+
 
 ### 接続
 
@@ -28,7 +28,7 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
 
 #### シリアルMIDデバイス
     USB-シリアルMIDIデバイスとしてArduinoのCOMポートへMIDIストリームを送ります。
-	
+
 
 ## 音源部MIDIサポート
 
@@ -51,18 +51,21 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
     Expression
     Modulation
     PartLevel
-    
+
+#### ソフトウェアモジュレーション
+  内部のSinテーブルを使いFM音源と同
+
 ## コントロール部MIDIコマンド
 音原設定等のコマンドやデータをシステムエクルシーブメッセージを利用して送信しています　　
 規格に定められたヘッダ等は含んでいませんので他の機器にこのデータが流れないようにして下さい。
 
 #### COMMANDフォーマット
-    4バイトのデータをMSBを分けた7byteのメッセージ 
-    フォーマット 
+    4バイトのデータをMSBを分けた7byteのメッセージ
+    フォーマット
     "0xf0, COMMAND, Data1_bit6-0, Data2_bit6-0, Data3_bit6-0,MSB_Data1-3,0xf7"
 
 	MSB_1-3:  0,0,0,0,0,MSB_Data1,MSB_Data2,MSB_data3
-	
+
 #### COMMAND
     0. YMF825のリセット
     1. レジスタへ書き込み DATA2=addres,DATA3=data
@@ -74,7 +77,5 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
     6. EEPROM tone read   EEPROMのDATA1番音色データを30byteのバイナリデータで返す
     9. write burst          音色バッファのYMF825へ全書き込み
     10. write data and burst 音色バッファData1番音色のDATA2番地へData3を書き込み後YMF825boardへ送信
-			  	   	   
-    11. write data only      音色バッファData1番音色Data2番地へData3を書き込み
-    
 
+    11. write data only      音色バッファData1番音色Data2番地へData3を書き込み

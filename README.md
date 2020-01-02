@@ -52,8 +52,24 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
     Modulation
     PartLevel
 
-#### ソフトウェアモジュレーション
-  内部のSinテーブルを使いFM音源と同
+## ソフトウェアモジュレーション
+  内部の波形テーブル(sin,三角波、鋸波)を使いFM音源の2オペレータの変調と同じ原理でモジュレーションの変換波形を作成します  
+  MIDIのコントコールチェンジコマンド（CC)へ以下の機能を割り当てました
+
+##### CC76 Vibrato Rate  
+ビブラートの周期(0～127)
+##### CC31 MoulationSinPitch
+生成波形の変化周期(0～31)  
+大きくすると変化パターンが細かくなります
+(FM音源の２OPのキャリアのMultipleに相当)
+##### CC32 ModulationSinDepth
+生成波形の変化の大きさ(0～31)  
+大きくすると変化パターンが複雑になります
+(FM音源のキャリアのTotalLevel に相当)
+##### CC59 SoftwareModulation  
+モジュレーションの変換の強さ(0～31)
+##### CC63 Modulation Delay
+モジュレーションの開始タイミング(0～127)  
 
 ## コントロール部MIDIコマンド
 音原設定等のコマンドやデータをシステムエクルシーブメッセージを利用して送信しています　　
@@ -79,3 +95,10 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
     10. write data and burst 音色バッファData1番音色のDATA2番地へData3を書き込み後YMF825boardへ送信
 
     11. write data only      音色バッファData1番音色Data2番地へData3を書き込み
+
+## ToneEditor
+toneEditor2ディレクトリにToneEditor.zipの形式で、javaの配布用JREを付けた実行可能jarをexe形式に変更したToneEditorArduino.exeを添付しています  
+適宜の場所に解凍して実行してください。  
+使用方法はtoneEditor2以下toneEditorReadme.mdをご覧になって下さい。　　
+#### おまけ
+ToneEditor/tonedata以下に不完全ですがDomino用の音源定義ファイル(YMF825midi.xml)と音色データ等を同梱しました。

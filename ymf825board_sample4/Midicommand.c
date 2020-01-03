@@ -510,6 +510,7 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
         eeprom_busy_wait();
         eeprom_write_byte((uint8_t *)f, c);
         break;
+        
       case 6: // read tone data from EEPROM
         readpoint_midi = (char *)(Data[1] << 5);
         for (f = 0; f < 30; f++) {
@@ -518,18 +519,24 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
             ;
           UDR0 = c;
           _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
-        }
+
+        }  
         break;
 
         case 7: //read tone data from toneMemory
         readpoint_midi = (char *)&(tone_reg[(int)Data[1]*30]);
-         for (f = 0; f < 30; f++) {
-          c = (*readpoint_midi++);
-          while (!(UCSR0A & (1 << UDRE0)))
-            ;
-          UDR0 = c;
-          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
-        }       
+        
+        set_usartsendpoint(readpoint_midi);
+
+        
+//         for (f = 0; f < 30; f++) {
+//          c = (*readpoint_midi++);
+//          while (!(UCSR0A & (1 << UDRE0)))
+//            ;
+//          UDR0 = c;
+//          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
+//        } 
+              
         break;
 
 
@@ -550,14 +557,15 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
             sysex_mes[4] = j;
 
             readpoint_midi = (char *)sysex_mes;
-           for (f = 0; f < 30; f++) {
-            c = (*readpoint_midi++);
-           while (!(UCSR0A & (1 << UDRE0)))
-             ;
-          UDR0 = c;
-          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
-
-           }
+            set_usartsendpoint(readpoint_midi);
+//           for (f = 0; f < 30; f++) {
+//            c = (*readpoint_midi++);
+//           while (!(UCSR0A & (1 << UDRE0)))
+//             ;
+//          UDR0 = c;
+//          _delay_us(15);     //Atmega16U2の転送が間に合わないのでディレイを入れる
+//
+//           }
 
   
               break;

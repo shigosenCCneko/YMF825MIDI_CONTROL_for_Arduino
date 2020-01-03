@@ -117,10 +117,13 @@ sei
   brne serial_read
   lds r25,TCNT1L
   lds r24,TCNT1H
-  cpi r25,0x20
+  cpi r25,0x20        //compare timer counter
   brcs usart_read
-  clr r25
-  sts TCNT1H,r25
+  subi r25,0x20
+  //clr r25
+  //sts TCNT1H,r25
+  clr r1          //必要無い??
+  sts TCNT1H,r1  //ZERO reg
   sts TCNT1L,r25
 call software_modulation  
   rjmp usart_read

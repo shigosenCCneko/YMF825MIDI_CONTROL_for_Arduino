@@ -16,6 +16,9 @@
 
 #include <avr/pgmspace.h>
 
+#define USART_SEND_ENABLE()  ( UCSR0B |=  _BV(UDRIE0) )
+#define USART_SEND_DISABLE() ( UCSR0B &= ~_BV(UDRIE0) )
+
 void write_burst(void);
 void flush_spi_buff(void);
 
@@ -26,7 +29,8 @@ extern  const   uint8_t career_no[8][4]PROGMEM  ;
 extern uint8_t carrier_val[8];
 
 extern uint8_t send_buf_byte;
-
+volatile char * usart_sendpoint;
+uint8_t usart_sendcnt = 0;
 /* リリースレートの減衰値 queueの最適化用 */
 uint8_t rer_time[16] = {255,128,64,32,16,8,4,2,1,0,0,0,0,0,0,0};
 
@@ -156,7 +160,34 @@ void write_burst() {
     voice_top_addr += 30;
   }
 }
+/* 30byte割り込み送信処理*/
+ISR( USART_UDRE_vect)
+{ 
+  uint8_t c;
+  UDR0 = *usart_sendpoint;
+  usart_sendpoint++;
+  _delay_us(3);       // atmega16u8の転送が間に合わないのでディレイを入れる（最小値2)
+  //UDR0 = (uint8_t *)(usart_sendpoint++);
 
+  if(--usart_sendcnt == 0)
+     USART_SEND_DISABLE();   
+
+
+
+
+}
+
+void set_usartsendpoint(char *p){
+
+   
+  usart_sendpoint = p;
+  usart_sendcnt = 30;
+  USART_SEND_ENABLE();
+
+
+
+
+}
 
 
 

@@ -275,7 +275,7 @@ pass_shift2:
       ldd  WORK_C,Y+14 //reg18  ;2    ウェイト中に計算
       ldd  WORK_S,Y+15 //reg19  ;4
   //    asr WORK_E                ;5
-  //    asr WORK_E                ;6
+      asr WORK_E                ;6
 
       add  WORK_S,WORK_E        ;5
     

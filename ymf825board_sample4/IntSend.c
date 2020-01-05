@@ -164,29 +164,20 @@ void write_burst() {
 /* 30byte割り込み送信処理*/
 ISR( USART_UDRE_vect)
 { 
-
   UDR0 = *usart_sendpoint;
   usart_sendpoint++;
   _delay_us(3);       // atmega16u8の転送が間に合わないのでディレイを入れる（最小値2)
-  //UDR0 = (uint8_t *)(usart_sendpoint++);
 
   if(--usart_sendcnt == 0)
      USART_SEND_DISABLE();   
-
-
-
 
 }
 
 void set_usartsendpoint(char *p){
 
-   
   usart_sendpoint = p;
   usart_sendcnt = 30;
   USART_SEND_ENABLE();
-
-
-
 
 }
 

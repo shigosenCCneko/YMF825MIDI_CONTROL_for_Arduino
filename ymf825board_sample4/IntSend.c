@@ -31,6 +31,7 @@ extern uint8_t carrier_val[8];
 extern uint8_t send_buf_byte;
 volatile char * usart_sendpoint;
 uint8_t usart_sendcnt = 0;
+
 /* リリースレートの減衰値 queueの最適化用 */
 uint8_t rer_time[16] = {255,128,64,32,16,8,4,2,1,0,0,0,0,0,0,0};
 
@@ -163,7 +164,7 @@ void write_burst() {
 /* 30byte割り込み送信処理*/
 ISR( USART_UDRE_vect)
 { 
-  uint8_t c;
+
   UDR0 = *usart_sendpoint;
   usart_sendpoint++;
   _delay_us(3);       // atmega16u8の転送が間に合わないのでディレイを入れる（最小値2)

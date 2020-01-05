@@ -25,14 +25,13 @@ void setup() {
   SetupHardware();
   setChannelDefault();
   optimize_queue();
-_delay_ms(10);
+  _delay_ms(10);
 
-pinMode( 16,INPUT_PULLUP );
-pinMode( 17,INPUT_PULLUP );
+  pinMode( 16,INPUT_PULLUP );
+  pinMode( 17,INPUT_PULLUP );
   _delay_ms(400);
 
   TIMSK0 = 0;   //タイマ割り込みの停止
-
 }
 
 
@@ -40,7 +39,8 @@ void loop() {
 extern uint8_t sysex_buf[65];
   
   while (1) {
-    if(!(PINC & 0x04)){
+    
+    if(!(PINC & 0x04)){       //Pin16 function
       if(master_vol < 0xfc){
         ++master_vol;
        cli();
@@ -48,14 +48,18 @@ extern uint8_t sysex_buf[65];
        sei();
       }
     }
-    if(!(PINC & 0x08)){
+    if(!(PINC & 0x08)){       //Pin17 function
+      
       if(master_vol > 4){
        cli();
        --master_vol;
        if_s_write( 0x19, master_vol );//MASTER VO
        sei();
       }
+      
     }
+
+    
     dat1 = usart_read();
 
     if (dat1 == 0xf0) {

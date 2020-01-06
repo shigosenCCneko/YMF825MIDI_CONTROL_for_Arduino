@@ -53,7 +53,7 @@ char channel_noteno[16];
 uint8_t carrier_val[8] = {1, 2, 4, 2, 1, 2, 2, 3};
 uint8_t rel_optval[16];
 
-
+extern uint8_t tone_reg[480];
 extern uint8_t play_mode;
 extern const PROGMEM char sin_tbl[64];
 
@@ -477,6 +477,68 @@ void pitch_wheel_change(char ch, char i , char j) {
   if_s_write(0x13, d);
  // sei();
 }
+
+
+void change_totallevel(uint8_t ch,uint8_t tl_no, uint8_t tl_val){
+  int adr;
+  char voice_no = 0;
+  char c;
+  if(tl_val > 63)
+    tl_val = 63;
+  voice_no = midi_ch[ch].voice_no;
+    adr = 5 + 30 * voice_no + 7 * tl_no;
+    c = tone_reg[adr];
+    c &= 0x03;
+    c |= (tl_val <<2);
+    tone_reg[adr] = c;
+  write_burst();
+
+}
+
+void change_detune(uint8_t ch, uint8_t dt_no,uint8_t dt_val){
+  int adr;
+  char voice_no = 0;
+  char c,d;
+  if(dt_val > 7)
+    dt_val = 7;
+  voice_no = midi_ch[ch].voice_no;
+  adr = 7+ 30 * voice_no + 7 * dt_no;
+    c = tone_reg[adr];
+    if(c == d){
+      c &= 0xf8;
+      c |= (dt_val);
+      tone_reg[adr]= c;
+
+       
+    }
+
+  write_burst();
+  
+  
+}
+
+void change_release(uint8_t ch, uint8_t rel_no,uint8_t rel_val){
+  int adr;
+  char voice_no = 0;
+  char c;
+  if(rel_val > 15)
+    rel_val = 15;
+  voice_no = midi_ch[ch].voice_no;
+  voice_no = 0;
+  adr = 3 + 30 * voice_no + 7 * rel_no;
+    c = tone_reg[adr];
+    c &= 0x0f;
+    c |= (rel_val << 4);
+    tone_reg[adr] = c;
+    write_burst();
+  //write_burst3(voice_no);
+  //lwrite_burst3(voice_no);
+  
+  
+}
+
+
+
 
 
 

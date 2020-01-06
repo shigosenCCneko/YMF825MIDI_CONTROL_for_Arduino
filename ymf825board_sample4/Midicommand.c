@@ -382,6 +382,58 @@ char Data[4];
             break;  
         default:
           break;
+
+          case 20:  //OP1 TL change
+            change_totallevel(ch,0,midi_data3);
+            
+            break;
+          
+          case 21:  //OP2 TL change
+            change_totallevel(ch,1,midi_data3);            
+            
+            break;
+            
+          case 22:  //OP3 TL Change
+            change_totallevel(ch,2,midi_data3);            
+            
+            break;
+                  
+          case 52:  //OP1 DT Change
+            change_detune(ch,0,midi_data3);
+            break;
+          
+          case 53:  //OP2 DT Change
+            change_detune(ch,1,midi_data3);
+            break;
+          case 54:  //OP3 DT Change
+            change_detune(ch,2,midi_data3);
+            break; 
+          case 55:  //OP4 DT Change
+            change_detune(ch,3,midi_data3);
+            break;
+          
+          
+          case 112: //OP1 Release Change
+          change_release(ch,0,midi_data3);
+          break;
+          
+          case 113: //OP2 Release Change
+          change_release(ch,1,midi_data3);
+          break;
+          case 114: //OP3 Release Change
+          change_release(ch,2,midi_data3);
+          break;
+          case 115: //OP4 Release Change
+          change_release(ch,3,midi_data3);
+          break;            
+
+
+
+
+
+
+
+          
       }		//controll change swich end
 
 

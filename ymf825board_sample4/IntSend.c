@@ -23,7 +23,7 @@ void write_burst(void);
 void flush_spi_buff(void);
 
 
-uint8_t tone_reg[480];
+extern uint8_t tone_reg[480];
 
 extern  const   uint8_t career_no[8][4]PROGMEM  ;
 extern uint8_t carrier_val[8];

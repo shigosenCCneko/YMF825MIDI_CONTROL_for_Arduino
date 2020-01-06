@@ -68,8 +68,34 @@ MidiCommand.cのSetupHardware()内のUBRR0の値を変更してください。
 (FM音源のキャリアのTotalLevel に相当)
 ##### CC59 SoftwareModulation  
 モジュレーションの変換の強さ(0～31)
+##### CC62 Mudulation Wave Select
+ソフトウェアモジュレーションに使用する基本波形  
+  0:  Sin Wave  
+  1:  Triangle Wave  
+  2:  Saw Wave  
 ##### CC63 Modulation Delay
 モジュレーションの開始タイミング(0～127)  
+
+## オペレータ操作コントロールコマンド
+FM音源の各オペレータのTotal Level,Detune,Release Rateに対するコントロールを
+以下のMIDIのコントコールチェンジコマンド（CC)へ割り当てました
+#### Total PartLevel  (0～63)  
+##### CC21  OP1 Total Level  
+##### CC22  OP2 Total Level  
+##### CC23  OP3 Total Level  
+(OP4は指定不可)
+
+#### Detune  (0～7)
+##### CC52 OP1 Detune  
+##### CC53 OP2 Detune  
+##### CC54 OP3 Detune  
+##### CC55 OP4 Detune
+
+#### Release Rate (0～15)
+##### CC112 OP1 Release Rate  
+##### CC113 OP2 Release Rate  
+##### CC114 OP3 Release Rate  
+##### CC115 OP4 Release Rate  
 
 ## コントロール部MIDIコマンド
 音原設定等のコマンドやデータをシステムエクルシーブメッセージを利用して送信しています　　

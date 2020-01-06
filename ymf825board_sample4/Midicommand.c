@@ -374,10 +374,10 @@ char Data[4];
               break;
 
           case 63: //ソフトモジュレーションディレイ
-            midi_data3 <<= 2;
+            //midi_data3 <<= 2;
             if(midi_data3 == 0)
               midi_data3 = 1;
-            
+
             midi_ch[ch].s_modulation_delay = midi_data3;
             break;  
         default:
@@ -608,8 +608,11 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
               j =2;
             sysex_mes[4] = j;
 
+
             readpoint_midi = (char *)sysex_mes;
             set_usartsendpoint(readpoint_midi);
+
+            
 //           for (f = 0; f < 30; f++) {
 //            c = (*readpoint_midi++);
 //           while (!(UCSR0A & (1 << UDRE0)))
@@ -679,7 +682,7 @@ void midi_sysEx(uint8_t * sysex_mes, uint8_t dat_len) {
               break;
             case 23: //software modulation Delay set
               i = Data[2];
-              i <<= 2;
+             // i <<= 2;
               if(i == 0)
                 i = 1;
               midi_ch[(int)Data[1]].s_modulation_delay = i;

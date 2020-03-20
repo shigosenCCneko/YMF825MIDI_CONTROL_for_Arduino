@@ -51,19 +51,39 @@
 //sin_tbl_address:  .ds.b 32
 
  .section .text
-
+.global wait_18clock
 .global wait_17clock  ;サブルーチンコールとリターンで17clock
+.global wait_16clock
+.global wait_15clock
+.global wait_14clock
+.global wait_13clock
+.global wait_12clock
+.global wait_11clock
+.global wait_10clock
+.global wait_9clock
+.global wait_8clock
 .func wait_17clock
- wait_17clock:
+wait_18clock:
+      nop
+wait_17clock:
      nop 
+wait_16clock:     
      nop
+wait_15clock:     
      nop
+wait_14clock:     
      nop
+wait_13clock:     
      nop
+wait_12clock:     
      nop
+wait_11clock:     
      nop
-     nop        
+wait_10clock:     
      nop
+wait_9clock:             
+     nop
+wait_8clock:     
      ret  
 .endfunc
      
@@ -178,7 +198,7 @@ pass_shift1:
   add ZL,WORK_C
   adc ZH,ZERO
   lpm WORK_C,Z   //offset無値読み出し
-
+  neg WORK_C
   asr WORK_S  //modulation_depth >> 1
   brcc pass_shift2
   neg WORK_C

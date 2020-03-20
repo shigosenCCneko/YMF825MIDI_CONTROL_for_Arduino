@@ -26,6 +26,7 @@
 .global voice_queue
 .global voice_queue_top
 .global voice_queue_tail
+.global channel_noteno
 .section .data
 .section .bss
 
@@ -48,7 +49,7 @@ sin_pointer:    .ds.b 16
 sin_tbl_offs:   .ds.b 16
 sin_tbl_address:  .ds.b 32
 
-
+channel_noteno:  .ds.b 16
 
 usart_write_p: .dc.b 1
 usart_read_p:  .dc.b 1
@@ -117,11 +118,10 @@ sei
   brne serial_read
   lds r25,TCNT1L
   lds r24,TCNT1H
-  cpi r25,0x20        //compare timer counter
+  cpi r25,0xc        //compare timer counter
   brcs usart_read
-  subi r25,0x20
-  //clr r25
-  //sts TCNT1H,r25
+  subi r25,0xc
+
   clr r1          //必要無い??
   sts TCNT1H,r1  //ZERO reg
   sts TCNT1L,r25

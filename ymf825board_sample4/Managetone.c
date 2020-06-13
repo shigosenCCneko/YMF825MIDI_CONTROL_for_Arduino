@@ -163,7 +163,7 @@ int get_voice(uint8_t ch, uint8_t tone_no, uint8_t velo) {
   }
 
   if (active_voice_num == MAX_VOICE_NUM) {
-    voice_ch = voice_queue_top;
+    voice_ch = voice_queue[voice_queue_top];
     note_off(voice_ch);
     return voice_ch;
   }
